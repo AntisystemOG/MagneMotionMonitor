@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.3.1** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.5** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -29,12 +29,33 @@ pytest                                  # 57 tests, headless Qt, no PLC needed
 ```
 ## Build the EXE / versioning
 ```bash
-python release.py             # bump version, then build dist/MagneMotionMonitor.exe
+python release.py             # bump version, build, then commit + push to GitHub
 python release.py --no-build  # just bump mm_monitor/version.py
+python release.py --no-push   # bump + build, skip the git commit/push (--no-git also works)
+build.bat                     # double-clickable wrapper for `python release.py`
 ```
 Produces a single double-clickable **`dist/MagneMotionMonitor.exe`** (~48 MB, windowed/no console).
 `MagneMotionMonitor.spec` bundles `mm_monitor/data/` and pulls in all `pycomm3` submodules
 (`collect_submodules`) so the EXE never fails on a dynamic import. `dist/` and `build/` are gitignored.
+
+**Git/GitHub integration**: after a successful build, `release.py`'s `git_publish()` stages
+everything, commits as `"Release vX.Y.Z"`, and pushes to the `origin` remote — auto-detects
+whether upstream tracking is set yet and adds `-u origin <branch>` on the first push. **Never
+raises** — no `.git` dir, no `origin` remote, nothing changed, or a failed push all just print a
+clear one-line note and return, so a git hiccup can never make a successful EXE build look like
+a failed release. One-time setup this depends on (not done automatically — repo creation needs a
+human to pick org/visibility): `gh repo create <name> --private --source=. --remote=origin --push`,
+or create the empty repo on github.com and `git remote add origin <url>`.
+
+**App icon**: `assets/app_icon.ico` (built from the MagneMotion company logo, PNG source in
+`Pictures and graphics\Magnamotion log.PNG` — a wide wordmark padded onto a transparent square
+canvas, not stretched, then saved at 7 sizes 16-256px). Two separate places reference it: the
+`.spec`'s `icon=` param sets the **.exe file's own icon** (what Explorer/taskbar-pin shows before
+running), and `main.py`'s `app.setWindowIcon(...)` sets the **running window/taskbar icon** —
+both need the file; `_resource_path()` in `main.py` resolves it whether running from source or
+frozen (checks `sys._MEIPASS` first, same pattern as `track_photo.py`'s `_PHOTO_PATH`).
+**Pictures/graphics for this project** are saved to `Pictures and graphics\` in the project root —
+check there before asking the user to save a new image file.
 
 **App icon**: `assets/app_icon.ico` (built from the MagneMotion company logo, PNG source in
 `Pictures and graphics\Magnamotion log.PNG` — a wide wordmark padded onto a transparent square
@@ -267,6 +288,11 @@ Hard C++/Qt crashes show NO Python popup (just the app closing). Causes found & 
   If a silent crash recurs, that file is the evidence to grab.
 
 ## Fix history (most recent first)
+- **`release.py` git integration + `build.bat`** — a successful build now auto-commits and
+  pushes to GitHub (`git_publish()`); added a double-clickable `build.bat` wrapper. Verified
+  end-to-end (commit/push mechanics, upstream-tracking auto-detect, graceful no-remote skip)
+  against a throwaway local bare repo before relying on it. GitHub repo creation itself is a
+  one-time manual step (`gh repo create ... --push`), not automated — see Build section.
 - **Path status overlay tried and removed** — briefly drew all 6 paths as a translucent line
   colored by live `MMI_path_status` (the "draw in a spur, pull its condition from the PLC"
   request), then removed per user feedback ("looks like crap") — Live Track is back to just
