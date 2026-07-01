@@ -13,7 +13,8 @@ hiddenimports = collect_submodules("pycomm3")
 # to the schematic automatically, but it should always be present in a release build.
 datas = [("mm_monitor/data/TrackFile.mmtrk",        "mm_monitor/data"),
          ("mm_monitor/data/node_configuration.xml", "mm_monitor/data"),
-         ("mm_monitor/data/track_photo.png",        "mm_monitor/data")]
+         ("mm_monitor/data/track_photo.png",        "mm_monitor/data"),
+         ("assets/app_icon.ico",                    "assets")]
 
 
 a = Analysis(
@@ -37,6 +38,7 @@ exe = EXE(
     a.datas,
     [],
     name="MagneMotionMonitor",
+    icon="assets/app_icon.ico",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

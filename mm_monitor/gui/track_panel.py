@@ -26,11 +26,11 @@ from PySide6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QPolygonF, QPix
 
 from ..plc_reader import SystemSnapshot
 from ..system_data import (
-    MAX_VEHICLES, MAX_PATHS, STATION_LOCATIONS, path_name, station_name,
-    vehicle_alarm_kind, current_operation, PATH_STATES,
+    MAX_VEHICLES, STATION_LOCATIONS, path_name, station_name,
+    vehicle_alarm_kind, current_operation,
 )
 from ..track_geometry import build_track
-from ..track_photo import PHOTO_SIZE, build_photo_track_model, PATH_WAYPOINTS_PX
+from ..track_photo import PHOTO_SIZE, build_photo_track_model
 
 # Real photo of the physical S7000 track. When present, this replaces the
 # auto-generated schematic as the Live Track background (see track_photo.py for
@@ -78,21 +78,6 @@ class _Cart:
         # True when this cart isn't in the PLC's current telemetry and we're
         # showing its last known position anyway — see CartPresenceGuard.
         self.held = held
-
-
-def path_states_from_snapshot(snap: SystemSnapshot) -> dict[int, int]:
-    """Extract each path's live MMI_path_status state (INIT/STARTUP/OPERATIONAL/
-    RESET/PROGRAMMING) as {path_id: state_value}. Same field lookup as
-    path_nc_panel.py's Paths & NCs table, so the color drawn over the photo
-    always agrees with what that tab reports."""
-    states: dict[int, int] = {}
-    for pid in range(1, MAX_PATHS + 1):
-        data = snap.path_status[pid] if pid < len(snap.path_status) else None
-        if isinstance(data, dict):
-            state_val = data.get("state") or data.get("State")
-            if state_val is not None:
-                states[pid] = int(state_val)
-    return states
 
 
 def carts_from_snapshot(snap: SystemSnapshot) -> list[_Cart]:
@@ -264,8 +249,6 @@ class TrackCanvas(QWidget):
         # computed the exact position to show — the anim timer is a no-op then.
         self._live_mode = False
         self._show_labels = True
-        self._show_path_status = True
-        self._path_states: dict[int, int] = {}   # path_id -> MMI_path_status state
         try:
             self._track = build_track()
         except Exception:
@@ -310,17 +293,6 @@ class TrackCanvas(QWidget):
         if not self._live_mode:
             return   # playback/static mode supplies its own frames each call
         self._carts = self._animator.tick(time.monotonic())
-        self.update()
-
-    def set_path_states(self, states: dict[int, int]):
-        """Live MMI_path_status per path (see path_states_from_snapshot) — drawn
-        as a colored line over the photo when show_path_status is on. Not part
-        of any animation/smoothing path since a discrete state doesn't need it."""
-        self._path_states = states
-        self.update()
-
-    def set_show_path_status(self, show: bool):
-        self._show_path_status = show
         self.update()
 
     def set_show_labels(self, show: bool):
@@ -372,20 +344,6 @@ class TrackCanvas(QWidget):
             p.drawPixmap(QRectF(offx, offy, pw * scale, ph * scale), self._photo_pixmap,
                         QRectF(0, 0, pw, ph))
             point_at = self._photo_model.point_at
-
-            # ── path status overlay: each path traced in its live MMI_path_status
-            # color (INIT/STARTUP/OPERATIONAL/RESET/PROGRAMMING) — the photo has
-            # no colored lines of its own, so this is the only way to see path
-            # health at a glance without switching to the Paths & NCs tab.
-            if self._show_path_status:
-                for pid, waypoints in PATH_WAYPOINTS_PX.items():
-                    state = self._path_states.get(pid)
-                    _label, color = PATH_STATES.get(state, ("", "#9aa5c0"))
-                    line_color = QColor(color)
-                    line_color.setAlpha(150)
-                    poly = QPolygonF([T(x, y) for (x, y) in waypoints])
-                    p.setPen(QPen(line_color, 5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-                    p.drawPolyline(poly)
         else:
             T, scale = self._make_transform(w, h)
             point_at = self._track.point_at
@@ -460,13 +418,12 @@ class TrackCanvas(QWidget):
         self._draw_labels(p, all_labels, w, h)
 
         # ── legend (bottom) + count (bottom-right) ───────────────────────────
+        # The color legend keys the schematic's colored path lines — meaningless
+        # over the photo (station labels already say "Mold 1"/"Mold 2"/etc.).
         if photo_mode:
-            if self._show_path_status:
-                self._draw_path_status_legend(p, 12, h - 20)
-            else:
-                p.setPen(QColor("#8899aa"))
-                p.setFont(QFont("Segoe UI", 8))
-                p.drawText(12, h - 12, "Live photo view — station/cart positions calibrated onto the real track.")
+            p.setPen(QColor("#8899aa"))
+            p.setFont(QFont("Segoe UI", 8))
+            p.drawText(12, h - 12, "Live photo view — station/cart positions calibrated onto the real track.")
         else:
             self._draw_legend(p, 12, h - 20)
         p.setPen(QColor("#1a7a40"))
@@ -599,20 +556,6 @@ class TrackCanvas(QWidget):
             p.drawText(x + 22, y + 8, label)
             x += 22 + p.fontMetrics().horizontalAdvance(label) + 18
 
-    def _draw_path_status_legend(self, p: QPainter, x: int, y: int):
-        """Legend for the live path-status colors drawn over the photo (see
-        paintEvent's path status overlay) — same states/colors as the Paths &
-        NCs tab's table, just shown as a color key instead of text per row."""
-        p.setFont(QFont("Segoe UI", 8))
-        for state in sorted(PATH_STATES):
-            label, color = PATH_STATES[state]
-            p.setPen(Qt.NoPen)
-            p.setBrush(QBrush(QColor(color)))
-            p.drawRect(x, y, 16, 8)
-            p.setPen(QColor("#333355"))
-            p.drawText(x + 22, y + 8, label)
-            x += 22 + p.fontMetrics().horizontalAdvance(label) + 18
-
 
 class TrackPanel(QWidget):
     open_system_detail = Signal()   # emitted when the progress bar is clicked
@@ -641,17 +584,9 @@ class TrackPanel(QWidget):
         self._chk_labels = QCheckBox("Show station labels")
         self._chk_labels.setChecked(True)
         self._chk_labels.toggled.connect(lambda v: self._canvas.set_show_labels(v))
-        self._chk_path_status = QCheckBox("Show path status")
-        self._chk_path_status.setChecked(True)
-        self._chk_path_status.setToolTip(
-            "Color each path by its live MMI_path_status state "
-            "(INIT/STARTUP/OPERATIONAL/RESET/PROGRAMMING)")
-        self._chk_path_status.toggled.connect(lambda v: self._canvas.set_show_path_status(v))
         info = QLabel("Live view — Yellow dots = key stations.")
         info.setStyleSheet("color:#8888aa;font-size:9pt;")
         bar.addWidget(self._chk_labels)
-        bar.addSpacing(12)
-        bar.addWidget(self._chk_path_status)
         bar.addSpacing(12)
         bar.addWidget(info)
         bar.addStretch()
@@ -694,7 +629,6 @@ class TrackPanel(QWidget):
         already the answer; for live connections, see feed_live_snapshot()."""
         self._update_progress_bar(snap)
         self._canvas.set_carts_exact(carts_from_snapshot(snap))
-        self._canvas.set_path_states(path_states_from_snapshot(snap))
 
     def feed_live_snapshot(self, snap: SystemSnapshot):
         """A fresh poll arrived from the live PLC connection. Feeds the dead-
@@ -706,7 +640,6 @@ class TrackPanel(QWidget):
         raw = carts_from_snapshot(snap)
         guarded = self._presence_guard.apply(raw, _operation_active(snap))
         self._canvas.feed_live(guarded)
-        self._canvas.set_path_states(path_states_from_snapshot(snap))
 
     def update_playback(self, cur_snap: SystemSnapshot,
                         next_snap: SystemSnapshot | None, frac: float):
@@ -720,6 +653,3 @@ class TrackPanel(QWidget):
         cur = self._presence_guard.apply(carts_from_snapshot(cur_snap), _operation_active(cur_snap))
         nxt = carts_from_snapshot(next_snap) if next_snap is not None else None
         self._canvas.set_carts_exact(interpolate_carts(cur, nxt, frac))
-        # Path status doesn't need interpolation (it's a discrete state, not a
-        # continuous position) — just show whichever frame the playhead is on.
-        self._canvas.set_path_states(path_states_from_snapshot(cur_snap))

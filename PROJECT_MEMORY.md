@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.2.5** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.1** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -36,11 +36,13 @@ Produces a single double-clickable **`dist/MagneMotionMonitor.exe`** (~48 MB, wi
 `MagneMotionMonitor.spec` bundles `mm_monitor/data/` and pulls in all `pycomm3` submodules
 (`collect_submodules`) so the EXE never fails on a dynamic import. `dist/` and `build/` are gitignored.
 
-**App icon**: tried using the MagneMotion company logo (wide wordmark, `Pictures and
-graphics\Magnamotion log.PNG`) as the .exe/window icon — reverted (v27.2.6) after user feedback;
-a wide wordmark reads poorly padded onto a small square icon. `assets/app_icon.ico` is still on
-disk (unused) in case a tighter-cropped mark is worth trying later; the EXE currently uses
-PyInstaller's default icon again, same as before v27.2.5.
+**App icon**: `assets/app_icon.ico` (built from the MagneMotion company logo, PNG source in
+`Pictures and graphics\Magnamotion log.PNG` — a wide wordmark padded onto a transparent square
+canvas, not stretched, then saved at 7 sizes 16-256px). Two separate places reference it: the
+`.spec`'s `icon=` param sets the **.exe file's own icon** (what Explorer/taskbar-pin shows before
+running), and `main.py`'s `app.setWindowIcon(...)` sets the **running window/taskbar icon** —
+both need the file; `_resource_path()` in `main.py` resolves it whether running from source or
+frozen (checks `sys._MEIPASS` first, same pattern as `track_photo.py`'s `_PHOTO_PATH`).
 **Pictures/graphics for this project** are saved to `Pictures and graphics\` in the project root —
 check there before asking the user to save a new image file.
 
@@ -190,18 +192,6 @@ you can compare it against the real machine, nudge the waypoints in `PATH_WAYPOI
 **Automatic fallback**: if `track_photo.png` is missing or fails to decode, `TrackCanvas`
 falls back to the schematic entirely — nothing else changes, unaffected by which is active.
 
-### Live path status overlay (photo mode)
-The photo has no colored lines of its own (it's a real photo), so Live Track draws each of
-the 6 `PATH_WAYPOINTS_PX` polylines as a translucent line colored by its live
-`MMI_path_status` state (INIT/STARTUP/OPERATIONAL/RESET/PROGRAMMING — same map as
-`system_data.PATH_STATES`, so it always agrees with the Paths & NCs tab). Toggled via the
-"Show path status" checkbox (default on); a color-key legend replaces the plain caption at
-the bottom of the canvas while it's showing. `path_states_from_snapshot(snap)` extracts
-`{path_id: state}` from `snap.path_status` (mirrors path_nc_panel.py's own field lookup so
-the two views can't disagree); `TrackCanvas.set_path_states()` stores it — no
-smoothing/interpolation needed since it's a discrete state, not a continuous position, so
-playback just shows whichever recorded frame the playhead is currently on.
-
 ### Cart motion smoothing (`gui/track_panel.py`)
 Raw PLC samples arrive in discrete jumps (~0.75s live poll interval, or once per
 recorded frame in playback) — drawing them directly made carts visibly teleport.
@@ -277,16 +267,13 @@ Hard C++/Qt crashes show NO Python popup (just the app closing). Causes found & 
   If a silent crash recurs, that file is the evidence to grab.
 
 ## Fix history (most recent first)
-- **App icon reverted** — the MagneMotion wordmark logo looked bad shrunk to icon sizes;
-  back to PyInstaller's default icon. `release.py` now also commits + pushes to GitHub
-  after a successful build (see Build section); added `build.bat` for a double-clickable
-  manual build.
-- **App icon (superseded above)** — MagneMotion company logo was briefly the .exe file icon
-  and running window/taskbar icon, via `assets/app_icon.ico`.
-- **Live path status overlay on the photo** — all 6 paths now draw as a translucent line
-  colored by their live `MMI_path_status` state, toggleable via "Show path status"
-  (default on), with a color-key legend. `path_states_from_snapshot()` extracts states
-  the same way path_nc_panel.py does so the two views can't disagree. Test suite 129 (+6).
+- **Path status overlay tried and removed** — briefly drew all 6 paths as a translucent line
+  colored by live `MMI_path_status` (the "draw in a spur, pull its condition from the PLC"
+  request), then removed per user feedback ("looks like crap") — Live Track is back to just
+  the photo + station dots + cart markers, no colored path lines. App icon (MagneMotion logo,
+  `assets/app_icon.ico`) is unrelated and stays in place. Test suite back to 123.
+- **App icon** — MagneMotion company logo is the .exe file icon and running window/taskbar
+  icon, via `assets/app_icon.ico`.
 - **Fixed mold-spur cart positioning ("stops before the turn")** — replaced the coarse
   ~9-point hand-placed calibration for Path 2/Path 4 (the mold spurs) with a dense
   numpy column-scan trace (both legs + the U-turn bottom, every ~2-4px). The coarse

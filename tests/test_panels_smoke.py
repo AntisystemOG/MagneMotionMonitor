@@ -242,34 +242,6 @@ def test_homing_with_intermittent_carts_does_not_crash(window):
         window._track_panel._canvas._on_anim_tick()
 
 
-# ── path status overlay (live MMI_path_status colored over the photo) ────────
-
-def test_path_status_overlay_renders_across_state_changes(window):
-    """Every path cycling through every known state, and the toggle flipping
-    on/off mid-stream, must not crash the photo-mode paintEvent."""
-    from mm_monitor.system_data import PATH_STATES
-    states = sorted(PATH_STATES)
-    for i, state in enumerate(states):
-        snap = make_snapshot()
-        for pid in range(1, 7):
-            snap.path_status[pid] = {"state": state}
-        window._on_snapshot(snap, from_playback=(i % 2 == 0))
-        if i % 3 == 0:
-            window._track_panel._chk_path_status.setChecked(not window._track_panel._chk_path_status.isChecked())
-
-
-def test_path_status_toggle_off_stops_drawing_but_not_crash(window):
-    window._track_panel._chk_path_status.setChecked(False)
-    window._on_snapshot(make_snapshot(), from_playback=True)
-    assert window._track_panel._canvas._show_path_status is False
-
-
-def test_path_status_unknown_state_falls_back_gracefully(window):
-    snap = make_snapshot()
-    snap.path_status[6] = {"state": 99}   # not in PATH_STATES
-    window._on_snapshot(snap, from_playback=True)   # must not crash
-
-
 def test_system_panel_homing_steps_restyle(qapp):
     """Walk every homing step so each branch of the step-button restyle runs
     (this is where the global theme's min-width could leak back in)."""

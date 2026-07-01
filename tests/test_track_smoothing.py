@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from mm_monitor.gui.track_panel import (
     _Cart, CartAnimator, carts_from_snapshot, interpolate_carts,
-    path_states_from_snapshot,
 )
 from tests.conftest import make_snapshot
 
@@ -27,34 +26,6 @@ def test_carts_from_snapshot_reads_position_and_velocity():
     carts = carts_from_snapshot(snap)
     c1 = next(c for c in carts if c.id == 1)
     assert c1.path == 6 and c1.pos == 5.5 and c1.vel == 0.5
-
-
-# ── path_states_from_snapshot (drives the photo-view path status overlay) ────
-
-def test_path_states_reads_all_real_paths():
-    # MAX_PATHS is 8 (array bound), but only paths 1-6 are real on this system —
-    # path_states_from_snapshot reads whatever the snapshot has, and the photo
-    # renderer only draws the 6 it has calibrated waypoints for (extras are
-    # harmless unused dict entries).
-    states = path_states_from_snapshot(make_snapshot())
-    assert {1, 2, 3, 4, 5, 6}.issubset(states)
-    assert all(states[pid] == 2 for pid in range(1, 7))   # default fixture: OPERATIONAL
-
-
-def test_path_states_reflects_a_faulted_or_resetting_path():
-    snap = make_snapshot()
-    snap.path_status[4] = {"state": 3}   # Path 4 (Mold 2) in RESET
-    states = path_states_from_snapshot(snap)
-    assert states[4] == 3
-    assert states[2] == 2   # other paths unaffected
-
-
-def test_path_states_skips_paths_with_no_data():
-    snap = make_snapshot()
-    snap.path_status[3] = None
-    states = path_states_from_snapshot(snap)
-    assert 3 not in states
-    assert 2 in states
 
 
 # ── interpolate_carts (playback: both endpoints known) ───────────────────────
