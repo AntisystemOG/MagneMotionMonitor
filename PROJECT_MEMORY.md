@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.3.8** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.9** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -223,6 +223,25 @@ legs, ≤40px = one tube's own edges — legs are ~80-90px apart, a single tube 
 Verified by walking a simulated cart around the full spur in even steps and confirming even
 pixel spacing throughout, including the curve (no more clustering).
 
+**Curve real-fraction vs. pixel-fraction mismatch (fixed, `REAL_TO_PIXEL_BREAKPOINTS`)**: fixing
+the ordering bug above wasn't the whole story. The mold-spur U-turn is only ~8% of the path's
+REAL length (from `track_geometry`'s own segment lengths — the 180° turn is two tight 90° curves
+totaling ~0.4m out of ~4.8m), but the traced U-turn's PIXEL arc-length share measured ~19-21% —
+the photographed curve's visual footprint is much bigger than its real-distance share. A plain
+1:1 real-fraction→pixel-fraction mapping therefore always placed anything PAST the curve (a
+mold's Load 2 station, or a cart mid-transit) too far along/low, and made travel through the
+curve look uneven ("weird route around the bend"). Fixed with `REAL_TO_PIXEL_BREAKPOINTS` in
+`track_photo.py`: a piecewise-linear remap anchored at the measured (real_fraction,
+pixel_fraction) pair at each leg/curve transition on paths 2 & 4, applied in `point_at()` before
+the normal arc-length lookup. After the fix, real distance and pixel distance correctly diverge
+*by design* — the curve (small real distance, big pixel footprint) is traversed with wider pixel
+jumps per real-meter than the straight legs, which is physically correct (the cart doesn't slow
+down for the turn). Verified: Mold 2's Load 2 station moved ~44px further up the return leg
+(matching a user-drawn arrow at its expected real position); an even-step walk around the whole
+spur still shows no clustering, now correctly denser through the legs and sparser through the
+turn. Paths 1/3/5/6 have no entry in `REAL_TO_PIXEL_BREAKPOINTS` (real_frac == pixel_frac) — their
+curves are too small a share of total length for this to be visibly worth correcting.
+
 **Station positions corrected from the real HMI** (`STATION_LOCATIONS` in `system_data.py`):
 the "Magnemotion Position Edits" screen (a live position-edit HMI on the actual machine) gives
 the real, currently-deployed Act. (actual) position of every named point — this supersedes the
@@ -312,6 +331,13 @@ Hard C++/Qt crashes show NO Python popup (just the app closing). Causes found & 
   If a silent crash recurs, that file is the evidence to grab.
 
 ## Fix history (most recent first)
+- **Fixed real-vs-pixel-fraction mismatch at the mold-spur U-turns** — the curve is only ~8% of
+  the real path length but ~19-21% of the traced pixel arc-length, so anything past the curve
+  (e.g. a Load 2 station) rendered too far along/low, and cart travel through the bend looked
+  uneven. Fixed with a piecewise-linear `REAL_TO_PIXEL_BREAKPOINTS` remap anchored at the real
+  leg/curve transition points. Verified against a user-drawn arrow marking the expected position
+  (station moved ~44px, matching direction) and a full even-step walk around both spurs. Test
+  suite 130 (+7).
 - **Fixed cart clustering at mold-spur bottom curves + corrected station positions from the
   real HMI** — root-caused a waypoint-ordering bug (the trace misclassified the ONE curving
   tube's inner/outer edge as "2 separate legs" near the bottom, causing several different real

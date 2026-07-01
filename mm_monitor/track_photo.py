@@ -122,6 +122,46 @@ def _cumulative_lengths(pts: list[tuple[float, float]]) -> list[float]:
     return s
 
 
+# Mold spurs (paths 2 & 4): the real path is leg → U-turn → leg, and the
+# U-turn is a genuinely SHORT slice of the real length (the two 90° curves
+# that make up the 180° turn are only ~8% of the path — see
+# track_geometry.build_track()'s segment lengths). But the PHOTOGRAPHED curve's
+# pixel-arc-length share is much larger (measured ~19-21%), because the real
+# curve is a tight radius while the physical rail's visible turn spans a much
+# wider arc in the photo. Mapping "real fraction" straight onto "pixel
+# fraction" 1:1 therefore put anything past the turn (e.g. a mold's Load 2
+# station, or a cart mid-transit) noticeably further along the pixel path than
+# it should be — reported as "the label should be higher up" and "carts take
+# a weird route around the bend".
+#
+# Fix: a piecewise-linear correction, anchored at the two leg/curve transition
+# points on both sides — (real_fraction, pixel_fraction) pairs measured directly
+# from these paths' own waypoint lists and track_geometry's real segment
+# lengths. Between anchors, a real fraction is linearly remapped to the pixel
+# fraction it should ACTUALLY correspond to, before the normal arc-length
+# lookup runs. Paths without an entry here (1, 3, 5, 6) use real_frac ==
+# pixel_frac directly — their curves are a small enough share of the total
+# length that this mismatch isn't meaningfully visible.
+REAL_TO_PIXEL_BREAKPOINTS: dict[int, list[tuple[float, float]]] = {
+    2: [(0.0, 0.0), (0.465, 0.394), (0.546, 0.585), (1.0, 1.0)],
+    4: [(0.0, 0.0), (0.459, 0.395), (0.541, 0.606), (1.0, 1.0)],
+}
+
+
+def _remap_fraction(frac: float, breakpoints: list[tuple[float, float]]) -> float:
+    """Piecewise-linear remap of a real-position fraction to the pixel-arc-length
+    fraction it should correspond to, given known (real, pixel) anchor points."""
+    if frac <= breakpoints[0][0]:
+        return breakpoints[0][1]
+    if frac >= breakpoints[-1][0]:
+        return breakpoints[-1][1]
+    for (r0, p0), (r1, p1) in zip(breakpoints, breakpoints[1:]):
+        if r0 <= frac <= r1:
+            t = 0.0 if r1 <= r0 else (frac - r0) / (r1 - r0)
+            return p0 + (p1 - p0) * t
+    return frac   # unreachable given the bounds checks above
+
+
 class PhotoTrackModel:
     """Same query shape as track_geometry.TrackModel (point_at(path, pos_m)) but
     returns photo-native pixel coordinates instead of schematic meter-coordinates,
@@ -145,6 +185,9 @@ class PhotoTrackModel:
             return None
         real_len = self._real_lengths.get(path_id, 0.0)
         frac = 0.0 if real_len <= 0 else max(0.0, min(1.0, pos_m / real_len))
+        breakpoints = REAL_TO_PIXEL_BREAKPOINTS.get(path_id)
+        if breakpoints:
+            frac = _remap_fraction(frac, breakpoints)
         target = frac * s[-1]
 
         lo, hi = 0, len(s) - 1
