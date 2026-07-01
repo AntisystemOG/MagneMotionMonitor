@@ -1,0 +1,5 @@
+Make a mininine Button in the top right that says minimize to see cameras make it optional to minimize for 30s 1min 10min 30min anount of time the restore to previous size
+Make Units square not round
+Remove the red exlamation on stalled on Jams should be red with exclamation
+Playback neeed a Plus and Minus skip 30Sec 1Min 5Min
+Make the Prgram light background not dark

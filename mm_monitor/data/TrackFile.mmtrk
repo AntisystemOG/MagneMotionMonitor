@@ -1,0 +1,118 @@
+###############################################################################
+#
+# MagneMover LITE track file.
+# 
+# © Copyright 2005, 2019 MagneMotion, Inc.  All Rights Reserved.
+# The information included in this file is MagneMotion, Inc. proprietary
+# information and is provided for the use of MagneMotion, Inc. customers only
+# and cannot be used for distribution, reproduction, or sale without the
+# express written permission of MagneMotion, Inc. In no event will MagneMotion,
+# Inc. be responsible or liable for indirect or consequential damages resulting
+# from the use or application of this file.
+#
+###############################################################################
+
+###############################################################################
+#
+## Comments:
+# 
+#  The '#' character initiates a comment, i.e., everything to the right of 
+#  the '#' is a comment.
+#
+## Commands:
+#
+#  Specify the HLC IP address:
+#    track_hlc_ip_address <ip_address>
+#      Note: Will set the NCHost.exe HLC IP address when the track is loaded
+#
+#  Start a path:
+#    path_start <path_id> <previous_path_id> <next_path_id>
+#      Notes: A previous_path_id value of zero indicates no path (open spur).
+#             If previous_path_id is zero, a next_path_id value is required
+#
+#  Add a 1 meter straight:
+#    motor_1_meter <orientation>
+#      Note: The orientation value can be right, left, up, or down
+#
+#  Add a quarter meter straight:
+#    motor_q_meter <orientation>
+#
+#  Add a 90-degree ML right curve:
+#    motor_r_curve <orientation>
+#      Note: The orientation of a curve is based on the track orientation at 
+#            the beginning of the curve, not the end
+#
+#  Add a 90-degree ML left curve:
+#    motor_l_curve <orientation>
+#
+#  Start a disjointed track:
+#    track_start <distance> <direction>
+#      Note: This command specifies the starting point for a disjointed track
+#            using a vector (distance in meters and direction angle in degrees)
+#            from the starting point for path 1
+#
+#
+## Handling MagneMover LITE switches:
+#
+#  An ML switch is represented as a curve and a quarter meter staight. These 
+#  are on separate paths.
+#
+###############################################################################
+
+
+# Path 1 with previous path 6
+path_start 1 6
+motor_r_curve up
+motor_q_meter right
+
+# Path 2 with previous path 6
+path_start 2 6
+motor_q_meter up
+motor_1_meter up
+motor_1_meter up
+motor_r_curve up
+motor_r_curve right
+motor_1_meter down
+motor_1_meter down
+motor_l_curve down
+
+# Path 3 with previous path 1
+path_start 3 1
+motor_1_meter right
+motor_1_meter right
+motor_1_meter right
+motor_1_meter right
+motor_q_meter right
+motor_1_meter right
+
+# Path 4 with previous path 3
+path_start 4 3
+motor_l_curve right
+motor_1_meter up
+motor_1_meter up
+motor_r_curve up
+motor_r_curve right
+motor_1_meter down
+motor_1_meter down
+motor_l_curve down
+
+# Path 5 with previous path 3
+path_start 5 3
+motor_q_meter right
+motor_q_meter right
+
+# Path 6 with previous path 4
+path_start 6 4
+motor_1_meter right
+motor_1_meter right
+motor_r_curve right
+motor_r_curve down
+motor_1_meter left
+motor_1_meter left
+motor_1_meter left
+motor_1_meter left
+motor_1_meter left
+motor_1_meter left
+motor_1_meter left
+motor_1_meter left
+motor_r_curve left

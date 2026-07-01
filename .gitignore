@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+*.log
+.pytest_cache/
+
+# Never commit license files or render-test artifacts
+FTAManagerData.xml
+*_test.png
+crash_logs/
