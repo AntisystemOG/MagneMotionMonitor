@@ -65,8 +65,10 @@ _PATH_COLORS = {
     1: "#5b6b8c", 2: "#2980b9", 3: "#7f8c8d",
     4: "#8e44ad", 5: "#5b6b8c", 6: "#16a085",
 }
-# stations that always get a text label (rest are dots only)
-_KEY_STATIONS = {6, 12, 13, 14, 16, 18, 26, 29, 30, 33, 34}
+# stations that always get a text label (rest are dots only). Includes every
+# mold-spur PreLoad/Load position (1-5, 7-11) so the corrected Load 1/Load 2
+# positions (see STATION_LOCATIONS) are visibly labeled, not just dots.
+_KEY_STATIONS = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 26, 29, 30, 33, 34}
 
 
 class _Cart:

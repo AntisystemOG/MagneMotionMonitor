@@ -22,40 +22,48 @@ def path_name(pid: int) -> str:
 
 
 # ── Station map (station_id → (path_id, location_m, name)) ───────────────────
-# Authoritative source: node_configuration.xml (matches the running PLC ladder).
-# location_m is meters from the start of that station's path.
+# Values corrected against the "Magnemotion Position Edits" HMI screen's live
+# Act. (actual/commanded) fields — that screen reads the real, currently-
+# deployed position of every named point and supersedes the original
+# node_configuration.xml-derived guesses wherever they differ. Confirmed exact
+# or near-exact: PreLoad 1/2/3 (both molds), Cooling, Pre-Load Roller/Pin,
+# Offload, HOME, Cleanout. Meaningfully corrected: both molds' Load 1/Load 2
+# (were guessed at 3.00/3.248 for both — the real machine has them at distinct,
+# non-symmetric positions per mold, and this was the root cause of pallets
+# rendering in the wrong spot at the Mold 1 staging/load area), Mold 2 Cooling,
+# and most of the process-line inspection/roller-test positions.
 STATION_LOCATIONS: dict[int, tuple[int, float, str]] = {
     # Path 2 — Mold 1
-    1:  (2, 2.65,  "Mold 1 Pre-Load"),
-    2:  (2, 2.75,  "Mold 1 Pre-Load"),
-    3:  (2, 3.00,  "Mold 1 Pre-Load"),
-    4:  (2, 3.00,  "Mold 1 Load"),
-    5:  (2, 3.248, "Mold 1 Load"),
-    6:  (2, 4.50,  "Mold 1 Cooling"),
+    1:  (2, 2.65,   "Mold 1 Pre-Load 3"),
+    2:  (2, 2.75,   "Mold 1 Pre-Load 2"),
+    3:  (2, 3.00,   "Mold 1 Pre-Load 1"),
+    4:  (2, 3.012,  "Mold 1 Load 1"),
+    5:  (2, 3.405,  "Mold 1 Load 2"),
+    6:  (2, 4.50,   "Mold 1 Cooling"),
     # Path 4 — Mold 2
-    7:  (4, 2.65,  "Mold 2 Pre-Load"),
-    8:  (4, 2.75,  "Mold 2 Pre-Load"),
-    9:  (4, 3.00,  "Mold 2 Pre-Load"),
-    10: (4, 3.00,  "Mold 2 Load"),
-    11: (4, 3.248, "Mold 2 Load"),
-    12: (4, 4.25,  "Mold 2 Cooling"),
+    7:  (4, 2.65,   "Mold 2 Pre-Load 3"),
+    8:  (4, 2.75,   "Mold 2 Pre-Load 2"),
+    9:  (4, 3.00,   "Mold 2 Pre-Load 1"),
+    10: (4, 3.062,  "Mold 2 Load 1"),
+    11: (4, 3.405,  "Mold 2 Load 2"),
+    12: (4, 4.40,   "Mold 2 Cooling"),
     # Path 6 — Process
     13: (6, 5.50,   "Pre-Load Roller"),
-    14: (6, 5.893,  "Load Roller"),
+    14: (6, 6.0403, "Load Roller"),
     15: (6, 6.50,   "Pre-Load Pin"),
-    16: (6, 6.8398, "Load Pin"),
-    17: (6, 7.55,   "Pre-Insp Pin"),
-    18: (6, 7.7075, "Insp Pin 1"),
-    19: (6, 7.759,  "Insp Pin 2"),
-    20: (6, 7.81,   "Insp Pin 3"),
-    21: (6, 7.8483, "Roller Test 1"),
-    22: (6, 8.088,  "Roller Test 2"),
-    23: (6, 8.3283, "Roller Test 3"),
-    24: (6, 8.64,   "Roller Test 4"),
-    25: (6, 8.933,  "Roller Test 5"),
-    26: (6, 9.1383, "Roller Test 6"),
-    27: (6, 9.25,   "Pre-Offload"),
-    28: (6, 9.60,   "Pre-Offload"),
+    16: (6, 6.8430, "Load Pin"),
+    17: (6, 7.3164, "Pre-Insp Pin"),
+    18: (6, 7.4790, "Insp Pin 1"),
+    19: (6, 7.5300, "Insp Pin 2"),
+    20: (6, 7.5810, "Insp Pin 3"),
+    21: (6, 7.8130, "Roller Test 1"),
+    22: (6, 8.0540, "Roller Test 2"),
+    23: (6, 8.2930, "Roller Test 3"),
+    24: (6, 8.6310, "Roller Test 4"),
+    25: (6, 8.8720, "Roller Test 5"),
+    26: (6, 9.1120, "Roller Test 6"),
+    27: (6, 9.40,   "Pre-Offload"),
+    28: (6, 9.65,   "Post-Offload"),
     29: (6, 9.9438, "Offload"),
     30: (6, 10.10,  "Mold Direction Check"),
     # Path 3 / Path 5 — Home & Cleanout
