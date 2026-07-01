@@ -178,18 +178,38 @@ class PhotoTrackModel:
             self._pts[pid] = waypoints
             self._s[pid] = _cumulative_lengths(waypoints)
 
-    def point_at(self, path_id: int, pos_m: float) -> tuple[float, float] | None:
-        pts = self._pts.get(path_id)
+    def pixel_length(self, path_id: int) -> float:
+        """Total pixel arc-length of a path's waypoint polyline (0 if unknown)."""
         s = self._s.get(path_id)
-        if not pts or not s or s[-1] <= 0:
+        return s[-1] if s else 0.0
+
+    def pixel_s_at(self, path_id: int, pos_m: float) -> float | None:
+        """Map a real meter-position to its position along the pixel polyline,
+        measured as PIXEL arc-length (0 .. pixel_length). This is the same
+        quantity `point_at` walks to — exposed so the pallet-spacing resolver
+        (see track_panel.resolve_pallet_spacing) can enforce a minimum on-screen
+        gap between carts in real pixel distance, not in meters (a fixed meter
+        gap would be a wildly different pixel gap on the tight U-turn vs. a
+        straight leg)."""
+        s = self._s.get(path_id)
+        if not s or s[-1] <= 0:
             return None
         real_len = self._real_lengths.get(path_id, 0.0)
         frac = 0.0 if real_len <= 0 else max(0.0, min(1.0, pos_m / real_len))
         breakpoints = REAL_TO_PIXEL_BREAKPOINTS.get(path_id)
         if breakpoints:
             frac = _remap_fraction(frac, breakpoints)
-        target = frac * s[-1]
+        return frac * s[-1]
 
+    def point_at_pixel_s(self, path_id: int, pix_s: float) -> tuple[float, float] | None:
+        """Return (x, y) for a given PIXEL arc-length along a path's polyline.
+        The inverse of pixel_s_at for rendering: the spacing resolver adjusts a
+        cart's pix_s to avoid overlap, then this places it back on the rail."""
+        pts = self._pts.get(path_id)
+        s = self._s.get(path_id)
+        if not pts or not s or s[-1] <= 0:
+            return None
+        target = max(0.0, min(pix_s, s[-1]))
         lo, hi = 0, len(s) - 1
         while lo < hi - 1:
             mid = (lo + hi) // 2
@@ -201,6 +221,12 @@ class PhotoTrackModel:
         t = 0.0 if seg_len <= 0 else (target - s[lo]) / seg_len
         a, b = pts[lo], pts[hi]
         return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+
+    def point_at(self, path_id: int, pos_m: float) -> tuple[float, float] | None:
+        pix_s = self.pixel_s_at(path_id, pos_m)
+        if pix_s is None:
+            return None
+        return self.point_at_pixel_s(path_id, pix_s)
 
 
 _cached_model: PhotoTrackModel | None = None

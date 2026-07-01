@@ -17,6 +17,7 @@ interpolate_carts() below:
 """
 from __future__ import annotations
 import time
+from collections import defaultdict
 from pathlib import Path
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QProgressBar,
@@ -102,6 +103,64 @@ def carts_from_snapshot(snap: SystemSnapshot) -> list[_Cart]:
             alarm=alarm,
         ))
     return carts
+
+
+# Minimum on-screen center-to-center gap between two carts on the SAME path.
+# A cart body is 2*_CART_R = 22px; 26 keeps a hair of daylight between queued
+# carts so their ID numbers stay readable instead of stacking into a blob.
+_CART_MIN_GAP_PX = 26.0
+
+
+def resolve_pallet_spacing(model, carts: list[_Cart]) -> dict[int, tuple[float, float]]:
+    """Compute each cart's on-screen (x, y) so carts on the same path never
+    render on top of each other — "beads on a string".
+
+    Why this is needed: adjacent real stations can be only millimetres apart
+    (e.g. Mold PreLoad 1 @ 3.000 m and Load 1 @ 3.062 m map to pixel positions
+    ~13px apart — closer than one cart body), so pallets queued there would
+    overlap into an unreadable clump. This spreads them along the rail to at
+    least `_CART_MIN_GAP_PX` apart, working in PIXEL arc-length (not meters, so
+    the gap is uniform on screen whether on the tight U-turn or a straight leg).
+
+    The lead cart (furthest along its path) keeps its true position; trailing
+    carts queue behind it — exactly how real pallets stack up. Only if a queue
+    would overflow the start of the path does the whole group shift forward just
+    enough to fit. Carts on different paths never interact. Returns
+    {cart_id: (x, y)} for every cart the model can place; a cart the model can't
+    place (unknown path) is simply omitted and the caller falls back to point_at.
+    """
+    out: dict[int, tuple[float, float]] = {}
+    by_path: dict[int, list[list]] = defaultdict(list)
+    for c in carts:
+        ps = model.pixel_s_at(c.path, c.pos)
+        if ps is None:
+            continue
+        by_path[c.path].append([c, ps])
+
+    for path, group in by_path.items():
+        plen = model.pixel_length(path)
+        # lead first (largest pixel arc-length); stable id tie-break so two carts
+        # at the same spot resolve deterministically frame-to-frame (no jitter).
+        group.sort(key=lambda cp: (cp[1], cp[0].id), reverse=True)
+
+        # pass 1 — queue trailing carts behind the lead (push back)
+        for i in range(1, len(group)):
+            if group[i][1] > group[i - 1][1] - _CART_MIN_GAP_PX:
+                group[i][1] = group[i - 1][1] - _CART_MIN_GAP_PX
+
+        # pass 2 — if the tail was pushed past the start of the path, shift the
+        # whole queue forward just enough to fit (only moves the lead when forced)
+        if group and group[-1][1] < 0.0:
+            group[-1][1] = 0.0
+            for i in range(len(group) - 2, -1, -1):
+                if group[i][1] < group[i + 1][1] + _CART_MIN_GAP_PX:
+                    group[i][1] = group[i + 1][1] + _CART_MIN_GAP_PX
+
+        for c, ps in group:
+            xy = model.point_at_pixel_s(path, max(0.0, min(ps, plen)))
+            if xy is not None:
+                out[c.id] = xy
+    return out
 
 
 def interpolate_carts(cur: list[_Cart], nxt: list[_Cart] | None, frac: float) -> list[_Cart]:
@@ -340,12 +399,15 @@ class TrackCanvas(QWidget):
 
         w, h = self.width(), self.height()
 
+        resolved_cart_xy: dict[int, tuple[float, float]] = {}
         if photo_mode:
             T, scale, offx, offy = self._make_photo_transform(w, h)
             pw, ph = PHOTO_SIZE
             p.drawPixmap(QRectF(offx, offy, pw * scale, ph * scale), self._photo_pixmap,
                         QRectF(0, 0, pw, ph))
             point_at = self._photo_model.point_at
+            # Spread same-path carts so they never overlap (beads on a string).
+            resolved_cart_xy = resolve_pallet_spacing(self._photo_model, self._carts)
         else:
             T, scale = self._make_transform(w, h)
             point_at = self._track.point_at
@@ -386,7 +448,9 @@ class TrackCanvas(QWidget):
         _CART_R = 11
         cart_labels: list[tuple[QPointF, str, str, bool]] = []  # (anchor, text, color, bold)
         for c in self._carts:
-            pt = point_at(c.path, c.pos)
+            # Photo mode: use the overlap-resolved position; fall back to the raw
+            # point_at only if the resolver couldn't place this cart.
+            pt = resolved_cart_xy.get(c.id) or point_at(c.path, c.pos)
             if pt is None:
                 continue
             sp = T(pt[0], pt[1])

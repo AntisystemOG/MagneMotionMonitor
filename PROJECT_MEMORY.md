@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.3.9** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.11** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -278,6 +278,23 @@ Two independent smoothing paths, both in `track_panel.py`:
   `update_playback(cur, next, frac)` are the corresponding entry points;
   `MainWindow._on_snapshot` branches on `from_playback` to pick the right one.
 
+### Anti-overlap pallet spacing — "beads on a string" (`resolve_pallet_spacing`)
+Adjacent real stations can be only millimetres apart (Mold PreLoad 1 @ 3.000 m and Load 1 @
+3.062 m map to pixel positions only ~13px apart — closer than one 22px cart body), so pallets
+queued there would render on top of each other into an unreadable blob. `resolve_pallet_spacing`
+(in `track_panel.py`, applied in photo-mode `paintEvent` every frame) fixes this: per path, it
+computes each cart's PIXEL arc-length (via the new `PhotoTrackModel.pixel_s_at`), sorts lead-first
+(furthest along), and pushes trailing carts back so no two are closer than `_CART_MIN_GAP_PX`
+(26px) — then `point_at_pixel_s` places each back on the rail centerline. Works in PIXEL
+arc-length (not meters) so the on-screen gap is uniform whether on the tight U-turn or a straight
+leg. The lead cart keeps its true position; the queue only shifts forward if it would overflow
+the path start. Every cart always gets a position (never dropped — combined with
+`CartPresenceGuard` this satisfies "no pallet disappears"). **Physical nuance**: near a U-turn the
+rail doubles back, so two carts a full arc-gap apart can be slightly closer in straight-line
+distance than the arc-gap — that's correct (a pallet just before the apex physically sits beside
+one just after), and they still never overlap bodies. Only `PhotoTrackModel` implements the pixel
+helpers, so this applies in photo mode; the schematic fallback uses the plain `point_at`.
+
 ### Carts held in place during Homing / Cleaning (`CartPresenceGuard`)
 `MMI_vehicle_status` is written entirely by the HLC — the PLC ladder never zeroes it.
 During cold-start RESET/STARTUP (steps 20-60) and during cleanout, the HLC genuinely
@@ -331,6 +348,13 @@ Hard C++/Qt crashes show NO Python popup (just the app closing). Causes found & 
   If a silent crash recurs, that file is the evidence to grab.
 
 ## Fix history (most recent first)
+- **Anti-overlap pallet spacing ("beads on a string")** — pallets queued at closely-spaced
+  stations (Mold PreLoad/Load are mm apart) rendered on top of each other. Added
+  `resolve_pallet_spacing` + pixel-arc-length helpers on `PhotoTrackModel`; carts now spread
+  along the rail to a min on-screen gap, lead cart holds its spot, none dropped, smooth as they
+  queue. Verified under a real event loop (converging carts, no jitter/overlap). Test suite 138
+  (+8). NOTE: mold Load *base* positions come from the authoritative HMI Act. values + curve
+  remap — still pending a real-machine eyeball confirmation from the user.
 - **Fixed real-vs-pixel-fraction mismatch at the mold-spur U-turns** — the curve is only ~8% of
   the real path length but ~19-21% of the traced pixel arc-length, so anything past the curve
   (e.g. a Load 2 station) rendered too far along/low, and cart travel through the bend looked
