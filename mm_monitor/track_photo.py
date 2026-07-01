@@ -64,50 +64,43 @@ PATH_WAYPOINTS_PX: dict[int, list[tuple[float, float]]] = {
     # Path 6's end and the right spur junction.
     1: [(1483, 150), (1484, 172)],
     # Path 2 — Mold 1 (RIGHT spur): down one leg, around the bottom, up the
-    # other. Densely measured (numpy column-trace, every ~2-4px). v2: near the
-    # bottom, the trace initially misclassified the inner/outer edge of the ONE
-    # curving tube as "2 separate rail legs" (the same heuristic used for the
-    # genuinely-separate straight legs) — the waypoint order jumped to the apex
-    # early, then back up, then down to the apex again, so several different
-    # real positions all rendered clustered at the bottom turn. Fixed by
-    # classifying "2 runs" by the gap between them: >40px = separate legs,
-    # <=40px = one curving tube's own edges (see scratchpad trace_rails3.py
-    # method if this ever needs re-deriving).
+    # other. Straight legs are densely measured (numpy column-trace); the U-turn
+    # BOTTOM is a semi-ellipse arc through the two measured leg centerlines and
+    # the true rail-bottom centerline (measured by a vertical scan at the U's
+    # center x). An earlier horizontal-scan trace swung the bottom waypoints
+    # wide/low OUTSIDE the rail (a horizontal scan can't follow a tube that runs
+    # horizontally at the U bottom), so carts "left the track" at the turn.
+    # See scratchpad build_uturn.py / rebuild_spurs.py for the arc method.
     2: [
         (1449, 175), (1431, 207), (1433, 233), (1434, 259), (1436, 285),
         (1438, 311), (1440, 337), (1442, 363), (1450, 389), (1447, 415),
         (1448, 441), (1450, 467), (1452, 493), (1454, 519), (1461, 545),
-        (1461, 571), (1456, 593), (1475, 597), (1473, 601), (1471, 605),
-        (1471, 609), (1469, 613), (1468, 617), (1465, 621), (1463, 625),
-        (1460, 629), (1458, 633), (1453, 637), (1450, 641), (1445, 645),
-        (1440, 649), (1431, 653), (1423, 657), (1409, 657), (1395, 653),
-        (1386, 649), (1382, 645), (1375, 641), (1372, 637), (1369, 633),
-        (1365, 629), (1362, 625), (1360, 621), (1358, 617), (1356, 613),
-        (1354, 609), (1352, 605), (1350, 601), (1350, 597), (1372, 593),
-        (1362, 571), (1360, 545), (1362, 519), (1360, 493), (1359, 467),
-        (1358, 441), (1354, 415), (1352, 389), (1353, 363), (1352, 337),
-        (1350, 311), (1348, 285), (1346, 259), (1344, 233), (1340, 207),
-        (1358, 175),
+        (1461, 571), (1456, 593), (1451, 596), (1450, 601), (1448, 606),
+        (1444, 611), (1439, 616), (1433, 619), (1426, 622), (1418, 625),
+        (1410, 626), (1401, 626), (1393, 626), (1384, 625), (1376, 622),
+        (1369, 619), (1363, 616), (1358, 611), (1354, 606), (1352, 601),
+        (1352, 596), (1372, 593), (1362, 571), (1360, 545), (1362, 519),
+        (1360, 493), (1359, 467), (1358, 441), (1354, 415), (1352, 389),
+        (1353, 363), (1352, 337), (1350, 311), (1348, 285), (1346, 259),
+        (1344, 233), (1340, 207), (1358, 175),
     ],
     # Path 3 — long straight connector (hosts station 33, HOME/Cold Start, near
     # its far end): right junction (Path 1's end) across to the left junction.
     3: [(1483, 175), (1200, 175), (900, 176), (600, 177), (518, 175)],
-    # Path 4 — Mold 2 (LEFT spur): mirrors Path 2, same corrected dense-trace method.
+    # Path 4 — Mold 2 (LEFT spur): mirrors Path 2, same measured legs + semi-
+    # ellipse U-turn arc.
     4: [
         (518, 175), (527, 207), (524, 233), (524, 259), (523, 285),
         (523, 311), (524, 337), (524, 363), (528, 389), (525, 415),
         (523, 441), (522, 467), (523, 493), (522, 519), (528, 545),
-        (527, 571), (517, 595), (536, 597), (535, 601), (535, 605),
-        (533, 609), (532, 613), (530, 617), (528, 621), (525, 625),
-        (523, 629), (520, 633), (516, 637), (512, 641), (508, 645),
-        (504, 649), (494, 653), (486, 657), (465, 657), (454, 653),
-        (447, 649), (443, 645), (439, 641), (434, 637), (431, 633),
-        (429, 629), (426, 625), (423, 621), (421, 617), (419, 613),
-        (418, 609), (417, 605), (416, 601), (415, 597), (436, 595),
-        (426, 571), (426, 545), (431, 519), (431, 493), (432, 467),
-        (432, 441), (430, 415), (429, 389), (432, 363), (434, 337),
-        (434, 311), (434, 285), (434, 259), (436, 233), (430, 207),
-        (435, 175),
+        (527, 571), (517, 595), (528, 597), (528, 603), (525, 609),
+        (522, 614), (517, 619), (510, 623), (503, 627), (495, 629),
+        (487, 631), (478, 632), (470, 631), (461, 629), (453, 627),
+        (446, 623), (440, 619), (435, 614), (431, 609), (429, 603),
+        (428, 597), (436, 595), (426, 571), (426, 545), (431, 519),
+        (431, 493), (432, 467), (432, 441), (430, 415), (429, 389),
+        (432, 363), (434, 337), (434, 311), (434, 285), (434, 259),
+        (436, 233), (430, 207), (435, 175),
     ],
     # Path 5 — Mold 2 Entry/Exit / Cleanout stub (hosts station 34): short direct
     # bypass alongside Path 4's junction span.
@@ -142,9 +135,18 @@ def _cumulative_lengths(pts: list[tuple[float, float]]) -> list[float]:
 # lookup runs. Paths without an entry here (1, 3, 5, 6) use real_frac ==
 # pixel_frac directly — their curves are a small enough share of the total
 # length that this mismatch isn't meaningfully visible.
+# Anchors: (0, 0) and the two leg/curve transitions come from track_geometry's
+# real segment lengths + the measured pixel arc-length of those transitions in
+# the waypoints above. The EXTRA middle anchor (~0.71 real) is a "Load lift":
+# the HMI Load 2 meter (3.405 m) maps mathematically to only ~37% up the return
+# leg, but on the real machine the load station sits ~2/3 up the leg (field-
+# confirmed by the operator with a pointer). Rather than distrust the HMI meter
+# everywhere, this single anchor pulls the Load region up to match reality; the
+# leg/curve anchors keep the U-turn correct and Cooling (top) unaffected. If the
+# operator flags a station as still off, nudge the matching anchor's pixel value.
 REAL_TO_PIXEL_BREAKPOINTS: dict[int, list[tuple[float, float]]] = {
-    2: [(0.0, 0.0), (0.465, 0.394), (0.546, 0.585), (1.0, 1.0)],
-    4: [(0.0, 0.0), (0.459, 0.395), (0.541, 0.606), (1.0, 1.0)],
+    2: [(0.0, 0.0), (0.465, 0.424), (0.546, 0.576), (0.704, 0.860), (1.0, 1.0)],
+    4: [(0.0, 0.0), (0.459, 0.424), (0.541, 0.577), (0.712, 0.860), (1.0, 1.0)],
 }
 
 

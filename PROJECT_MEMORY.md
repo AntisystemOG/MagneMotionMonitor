@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.3.11** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.12** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -348,6 +348,16 @@ Hard C++/Qt crashes show NO Python popup (just the app closing). Causes found & 
   If a silent crash recurs, that file is the evidence to grab.
 
 ## Fix history (most recent first)
+- **Mold U-turn arc fix + Load-station lift** — carts "left the track" at the two mold U-turns
+  because the horizontal-scan trace swung the bottom waypoints wide/low outside the rail (a
+  horizontal scan can't follow a tube that runs horizontal at the U bottom). Replaced each U-turn
+  bottom with a semi-ellipse arc through the two measured leg centerlines + the true rail-bottom
+  center (vertical scan at the U's center x); recomputed the `REAL_TO_PIXEL_BREAKPOINTS` leg/curve
+  anchors for the new waypoints. Also added a "Load lift" remap anchor: the HMI Load 2 meter
+  (3.405 m) maps mathematically to ~37% up the return leg, but the operator field-confirmed (twice,
+  with a pointer) that the load station sits ~2/3 up — the single anchor pulls the Load region up
+  to match without distrusting the HMI elsewhere. **Pending operator confirmation of the new Load
+  height.**
 - **Anti-overlap pallet spacing ("beads on a string")** — pallets queued at closely-spaced
   stations (Mold PreLoad/Load are mm apart) rendered on top of each other. Added
   `resolve_pallet_spacing` + pixel-arc-length helpers on `PhotoTrackModel`; carts now spread
