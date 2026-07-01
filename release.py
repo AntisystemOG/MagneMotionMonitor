@@ -5,8 +5,14 @@ Version scheme: WEEK.DAY.BUILD
   DAY   = ISO weekday (1=Mon … 7=Sun)
   BUILD = build counter for that day; resets to 1 each new day, +1 on rebuilds
 
-    python release.py            # bump version, then build dist/MagneMotionMonitor.exe
+    python release.py            # bump version, build, commit + push to GitHub
     python release.py --no-build # just bump mm_monitor/version.py
+    python release.py --no-push  # bump + build, but skip the git commit/push
+    python release.py --no-git   # alias for --no-push
+
+Requires a git remote already configured (`git remote add origin ...` or
+`gh repo create ... --push` once, up front) — if there isn't one yet, the git
+step prints a note and is skipped rather than failing the whole release.
 """
 from __future__ import annotations
 import datetime as _dt
@@ -58,7 +64,56 @@ def build_exe():
     print("Built dist/MagneMotionMonitor.exe")
 
 
+def _git(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+
+
+def git_publish(version: str):
+    """Stage everything, commit as this release, and push to the configured
+    remote. Never raises — a git problem (no remote yet, network down, nothing
+    changed) prints a clear note and returns, so it can't turn a successful
+    EXE build into a failed release run."""
+    if not (ROOT / ".git").exists():
+        print("Not a git repository — skipping commit/push. Run "
+              "'git init' and add a remote (or 'gh repo create --push') once, "
+              "then re-run release.py.")
+        return
+
+    remote = _git("remote", "get-url", "origin")
+    if remote.returncode != 0:
+        print("No 'origin' remote configured — skipping push. Run once:\n"
+              "  gh repo create <name> --private --source=. --remote=origin --push")
+        return
+
+    add = _git("add", "-A")
+    if add.returncode != 0:
+        print(f"git add failed, skipping commit/push:\n{add.stderr}")
+        return
+
+    if _git("diff", "--cached", "--quiet").returncode == 0:
+        print("No changes to commit — nothing to push.")
+        return
+
+    commit = _git("commit", "-m", f"Release v{version}")
+    if commit.returncode != 0:
+        print(f"git commit failed, skipping push:\n{commit.stderr}")
+        return
+
+    branch = _git("branch", "--show-current").stdout.strip() or "main"
+    has_upstream = _git("rev-parse", "--abbrev-ref", f"{branch}@{{u}}").returncode == 0
+    push_args = ["push"] if has_upstream else ["push", "-u", "origin", branch]
+    push = _git(*push_args)
+    if push.returncode != 0:
+        print(f"git push failed:\n{push.stderr}\n"
+              "(the EXE built fine — this only affects publishing to GitHub)")
+        return
+
+    print(f"Pushed v{version} to GitHub ({branch}).")
+
+
 if __name__ == "__main__":
-    bump()
+    version = bump()
     if "--no-build" not in sys.argv:
         build_exe()
+    if "--no-push" not in sys.argv and "--no-git" not in sys.argv:
+        git_publish(version)
