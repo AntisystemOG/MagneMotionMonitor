@@ -67,6 +67,28 @@ def test_interpolate_carts_cart_absent_next_frame_holds_current():
     assert c2.pos == 1.0
 
 
+def test_interpolate_carts_cart_in_next_but_not_cur_appears():
+    """A cart that reappeared in nxt after a dropout should be visible during
+    the interpolation window, not vanish until the frame advances."""
+    cur = [_cart(cid=1, pos=5.0)]
+    nxt = [_cart(cid=1, pos=6.0), _cart(cid=2, pos=3.0)]  # cart 2 reappeared
+    out = interpolate_carts(cur, nxt, 0.5)
+    ids = {c.id for c in out}
+    assert 2 in ids
+    c2 = next(c for c in out if c.id == 2)
+    assert c2.pos == 3.0   # appears at its known nxt position
+
+
+def test_interpolate_carts_new_cart_uses_next_velocity():
+    """A reappearing cart should carry the velocity from nxt so it animates
+    correctly from the moment it reappears."""
+    cur = [_cart(cid=1, pos=5.0)]
+    nxt = [_cart(cid=1, pos=6.0, vel=0.8), _cart(cid=2, pos=3.0, vel=0.5)]
+    out = interpolate_carts(cur, nxt, 0.5)
+    c2 = next(c for c in out if c.id == 2)
+    assert c2.vel == 0.5
+
+
 # ── CartAnimator (live: dead-reckon from last known velocity) ────────────────
 
 def test_animator_dead_reckons_forward_using_velocity():

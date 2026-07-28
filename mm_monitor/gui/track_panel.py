@@ -166,10 +166,19 @@ def resolve_pallet_spacing(model, carts: list[_Cart]) -> dict[int, tuple[float, 
 def interpolate_carts(cur: list[_Cart], nxt: list[_Cart] | None, frac: float) -> list[_Cart]:
     """Exact interpolation between two known recorded frames — used during
     playback, where (unlike live) the "future" sample is already on disk, so
-    there is no need to predict: just blend straight to the ground truth."""
+    there is no need to predict: just blend straight to the ground truth.
+
+    Carts in *both* frames (same path) get linear position blending.
+    Carts only in *cur* (left the tracked set or jumped to a different path)
+    are held at their cur position — no smear across unrelated geometry.
+    Carts only in *nxt* (reappeared after a telemetry dropout) are included
+    immediately at their nxt position so they don't pop in abruptly when the
+    frame index advances — they're visible throughout the interpolation window.
+    """
     if not nxt or frac <= 0.0:
         return cur
     nxt_by_id = {c.id: c for c in nxt}
+    cur_by_id = {c.id: c for c in cur}
     out = []
     for c in cur:
         n = nxt_by_id.get(c.id)
@@ -178,6 +187,12 @@ def interpolate_carts(cur: list[_Cart], nxt: list[_Cart] | None, frac: float) ->
         else:
             pos = c.pos + (n.pos - c.pos) * frac
             out.append(_Cart(c.id, c.path, pos, n.vel, n.dest, n.alarm))
+    # Carts in nxt that were NOT in cur — they reappeared after a dropout.
+    # Include them now (at their nxt position) so they're visible during the
+    # interpolation window instead of vanishing until the next frame advance.
+    for n in nxt:
+        if n.id not in cur_by_id:
+            out.append(n)
     return out
 
 
@@ -716,6 +731,14 @@ class TrackPanel(QWidget):
         behavior as feed_live_snapshot applies here too, since normal forward
         playback ticking is just as sequential as live polling."""
         self._update_progress_bar(cur_snap)
-        cur = self._presence_guard.apply(carts_from_snapshot(cur_snap), _operation_active(cur_snap))
-        nxt = carts_from_snapshot(next_snap) if next_snap is not None else None
+        op_active = _operation_active(cur_snap)
+        cur = self._presence_guard.apply(carts_from_snapshot(cur_snap), op_active)
+        # Apply the guard to nxt too so carts that are still in a dropout when
+        # the next frame arrives stay held (the guard carries forward). Without
+        # this, a cart absent from both frames but still mid-operation would
+        # only be held in cur and then vanish when the frame advances.
+        if next_snap is not None:
+            nxt = self._presence_guard.apply(carts_from_snapshot(next_snap), op_active)
+        else:
+            nxt = None
         self._canvas.set_carts_exact(interpolate_carts(cur, nxt, frac))

@@ -25,7 +25,7 @@ Default PLC IP is pre-filled (192.168.1.10). Click **Connect**.
 ## Tests
 ```bash
 pip install -r requirements-dev.txt    # adds pytest
-pytest                                  # 57 tests, headless Qt, no PLC needed
+pytest                                  # 140 tests, headless Qt, no PLC needed
 ```
 ## Build the EXE / versioning
 ```bash
@@ -348,6 +348,16 @@ Hard C++/Qt crashes show NO Python popup (just the app closing). Causes found & 
   If a silent crash recurs, that file is the evidence to grab.
 
 ## Fix history (most recent first)
+- **Playback cart disappearance + pop-in fix** — during playback of a recording with
+  Homing/Cleanout telemetry dropouts, carts vanished during the dropout gap and then
+  popped in at hard jumps when telemetry returned. Two root causes in `track_panel.py`:
+  (1) `interpolate_carts()` only iterated `cur` — carts that reappeared in `nxt` (after
+  being absent from `cur`) were invisible until the frame index advanced, then appeared
+  at a hard jump. Fixed by also including carts from `nxt` that aren't in `cur` (at their
+  known nxt position). (2) `update_playback()` applied `CartPresenceGuard` to `cur` but
+  NOT `nxt` — a cart absent from both frames but still mid-operation was only held in cur,
+  then vanished when the frame advanced. Fixed by applying the guard to both frames with
+  the same `op_active` flag. Test suite 140 (+2).
 - **Mold U-turn arc fix + Load-station lift** — carts "left the track" at the two mold U-turns
   because the horizontal-scan trace swung the bottom waypoints wide/low outside the rail (a
   horizontal scan can't follow a tube that runs horizontal at the U bottom). Replaced each U-turn
