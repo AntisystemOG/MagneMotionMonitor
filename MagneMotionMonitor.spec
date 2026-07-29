@@ -38,7 +38,7 @@ exe = EXE(
     a.datas,
     [],
     name="MagneMotionMonitor",
-    icon="assets/app_icon.ico",
+    icon="dist/app_icon.ico",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
