@@ -103,6 +103,8 @@ class _Sig(QObject):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        from PySide6.QtGui import QIcon
+        self.setWindowIcon(QIcon("src/resources/app_icon.png"))
         self._reader  = PLCReader()
         self._signals = _Sig()
         self._prev_step: int = 5
