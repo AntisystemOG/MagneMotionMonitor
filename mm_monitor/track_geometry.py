@@ -18,51 +18,54 @@ from pathlib import Path
 # Embedded track (matches mm_monitor/data/TrackFile.mmtrk) so the EXE needs no
 # external file. If the data file is present it is preferred (lets you swap tracks).
 TRACK_MMTRK = """
-path_start 1 6
-motor_r_curve up
-motor_q_meter right
-path_start 2 6
-motor_q_meter up
-motor_1_meter up
-motor_1_meter up
-motor_r_curve up
-motor_r_curve right
-motor_1_meter down
-motor_1_meter down
-motor_l_curve down
-path_start 3 1
-motor_1_meter right
-motor_1_meter right
-motor_1_meter right
-motor_1_meter right
-motor_q_meter right
-motor_1_meter right
-path_start 4 3
-motor_l_curve right
-motor_1_meter up
-motor_1_meter up
-motor_r_curve up
-motor_r_curve right
-motor_1_meter down
-motor_1_meter down
-motor_l_curve down
-path_start 5 3
-motor_q_meter right
-motor_q_meter right
-path_start 6 4
-motor_1_meter right
-motor_1_meter right
-motor_r_curve right
-motor_r_curve down
-motor_1_meter left
-motor_1_meter left
-motor_1_meter left
-motor_1_meter left
-motor_1_meter left
-motor_1_meter left
-motor_1_meter left
-motor_1_meter left
-motor_r_curve left
+    path_start 1 6
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    path_start 2 6
+    motor_1_meter up
+    motor_1_meter up
+    motor_r_curve up
+    motor_r_curve right
+    motor_1_meter down
+    motor_1_meter down
+    motor_l_curve down
+    path_start 3 1
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    motor_1_meter right
+    path_start 4 3
+    motor_l_curve right
+    motor_1_meter up
+    motor_1_meter up
+    motor_r_curve up
+    motor_r_curve right
+    motor_1_meter down
+    motor_1_meter down
+    motor_l_curve down
+    path_start 5 3
+    motor_1_meter right
+    motor_1_meter right
+    path_start 6 4
+    motor_1_meter right
+    motor_1_meter right
+    motor_r_curve right
+    motor_r_curve down
+    motor_1_meter left
+    motor_1_meter left
+    motor_1_meter left
+    motor_1_meter left
+    motor_1_meter left
+    motor_1_meter left
+    motor_1_meter left
+    motor_1_meter left
+    motor_r_curve left
 """
 
 # Centerline radius of a MagneMover LITE 90° curve motor, in meters.
@@ -173,7 +176,6 @@ class TrackModel:
 
     def _resolve_layout(self):
         abs_start: dict[int, tuple] = {1: (0.0, 0.0)}
-        # Fixpoint resolve: a path starts where its previous path ends.
         for _ in range(len(self.paths) + 2):
             for pid, pg in self.paths.items():
                 if pid in abs_start:
@@ -204,7 +206,6 @@ class TrackModel:
         total = pg.length
         pos = max(0.0, min(pos_m, total))
         s = pg.s
-        # binary search for segment
         lo, hi = 0, len(s) - 1
         while lo < hi - 1:
             mid = (lo + hi) // 2
@@ -218,7 +219,6 @@ class TrackModel:
         return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
 
     def closure_error(self) -> float:
-        """Distance between where path 6 ends and path 1 begins (loop gap)."""
         if 6 not in self.paths or 1 not in self.paths:
             return 0.0
         p6 = self.paths[6].abs_pts[-1]
@@ -234,9 +234,6 @@ def _build_from_text(text: str, R: float) -> TrackModel:
 
 
 def _solve_closure_radius(text: str) -> float:
-    """1-D search for the curve radius that makes the main loop close (no gaps
-    at path junctions). The loop closes in Y for any radius and in X at one
-    specific radius, so this finds a near-exact closure."""
     best_R, best_err = ML_CURVE_RADIUS, float("inf")
     R = 0.05
     while R <= 0.60:
@@ -261,8 +258,6 @@ _solved_R: float | None = None
 
 
 def build_track(R: float | None = None) -> TrackModel:
-    """Build the track model. If R is None, auto-solve the curve radius that
-    closes the loop (gap-free junctions) and cache it."""
     global _solved_R
     text = _load_track_text()
     if R is None:
@@ -270,7 +265,6 @@ def build_track(R: float | None = None) -> TrackModel:
             _solved_R = _solve_closure_radius(text)
         R = _solved_R
     return _build_from_text(text, R)
-
 
 if __name__ == "__main__":
     text = _load_track_text()
@@ -282,6 +276,5 @@ if __name__ == "__main__":
     for pid in sorted(model.paths):
         print(f"  Path {pid}: length={model.paths[pid].length:.3f} m, "
               f"prev={model.paths[pid].prev}")
-    # sample: station 30 on path 6 at 10.1 m
     pt = model.point_at(6, 10.1)
     print(f"Station 30 (path 6 @ 10.1m) -> {tuple(round(c,2) for c in pt)}")
