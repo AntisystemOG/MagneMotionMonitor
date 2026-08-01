@@ -53,61 +53,40 @@ PHOTO_SIZE = (1584, 672)
 # along this pixel polyline — so absolute pixel spacing doesn't need to exactly
 # match real-world scale, only the relative shape/order needs to be right.
 PATH_WAYPOINTS_PX: dict[int, list[tuple[float, float]]] = {
-    # Path 6 — Process: left junction -> approach leg -> left cap -> top straight
-    # -> right end (hands off to Path 1). Order matches the real travel direction.
+    # Path 6 - Process: top main rail, left-to-right across the image.
     6: [
-        (478, 175), (350, 175), (200, 165), (90, 130), (40, 90), (34, 65),
-        (90, 60), (200, 63), (400, 64), (600, 65), (800, 65), (1000, 66),
-        (1200, 67), (1350, 70), (1420, 85), (1460, 115), (1483, 150),
+        (36, 70), (50, 60), (100, 55), (200, 54), (300, 54),
+        (400, 54), (500, 54), (600, 54), (700, 54), (800, 54),
+        (900, 54), (1000, 54), (1100, 54), (1200, 54), (1300, 54),
+        (1400, 54), (1500, 58), (1550, 75)
     ],
-    # Path 1 — Mold 1 Entry/Exit (tiny, no stations): closes the gap between
-    # Path 6's end and the right spur junction.
-    1: [(1483, 150), (1484, 172)],
-    # Path 2 — Mold 1 (RIGHT spur): down one leg, around the bottom, up the
-    # other. Straight legs are densely measured (numpy column-trace); the U-turn
-    # BOTTOM is a semi-ellipse arc through the two measured leg centerlines and
-    # the true rail-bottom centerline (measured by a vertical scan at the U's
-    # center x). An earlier horizontal-scan trace swung the bottom waypoints
-    # wide/low OUTSIDE the rail (a horizontal scan can't follow a tube that runs
-    # horizontally at the U bottom), so carts "left the track" at the turn.
-    # See scratchpad build_uturn.py / rebuild_spurs.py for the arc method.
+    # Path 1 - tiny connector at top right (main rail to right spur)
+    1: [(1550, 75), (1560, 95)],
+    # Path 2 - Mold 1 (RIGHT spur): down outer leg, U-turn, up inner leg
     2: [
-        (1449, 175), (1431, 207), (1433, 233), (1434, 259), (1436, 285),
-        (1438, 311), (1440, 337), (1442, 363), (1450, 389), (1447, 415),
-        (1448, 441), (1450, 467), (1452, 493), (1454, 519), (1461, 545),
-        (1461, 571), (1456, 593), (1451, 596), (1450, 601), (1448, 606),
-        (1444, 611), (1439, 616), (1433, 619), (1426, 622), (1418, 625),
-        (1410, 626), (1401, 626), (1393, 626), (1384, 625), (1376, 622),
-        (1369, 619), (1363, 616), (1358, 611), (1354, 606), (1352, 601),
-        (1352, 596), (1372, 593), (1362, 571), (1360, 545), (1362, 519),
-        (1360, 493), (1359, 467), (1358, 441), (1354, 415), (1352, 389),
-        (1353, 363), (1352, 337), (1350, 311), (1348, 285), (1346, 259),
-        (1344, 233), (1340, 207), (1358, 175),
+        (1560, 95), (1555, 120), (1548, 160), (1544, 200), (1542, 240),
+        (1540, 280), (1538, 320), (1537, 360), (1536, 400), (1536, 440),
+        (1536, 480), (1536, 520), (1536, 560), (1530, 590), (1510, 610),
+        (1480, 618), (1450, 618), (1420, 610), (1395, 590), (1385, 560),
+        (1383, 520), (1382, 480), (1381, 440), (1380, 400), (1379, 360),
+        (1378, 320), (1376, 280), (1374, 240), (1371, 200), (1368, 160),
+        (1365, 120), (1360, 95)
     ],
-    # Path 3 — long straight connector (hosts station 33, HOME/Cold Start, near
-    # its far end): right junction (Path 1's end) across to the left junction.
-    3: [(1483, 175), (1200, 175), (900, 176), (600, 177), (518, 175)],
-    # Path 4 — Mold 2 (LEFT spur): mirrors Path 2, same measured legs + semi-
-    # ellipse U-turn arc.
+    # Path 3 - long straight middle connector between right and left spurs
+    3: [(1360, 95), (1100, 95), (800, 95), (500, 95), (240, 95)],
+    # Path 4 - Mold 2 (LEFT spur): down outer leg, U-turn, up inner leg
     4: [
-        (518, 175), (527, 207), (524, 233), (524, 259), (523, 285),
-        (523, 311), (524, 337), (524, 363), (528, 389), (525, 415),
-        (523, 441), (522, 467), (523, 493), (522, 519), (528, 545),
-        (527, 571), (517, 595), (528, 597), (528, 603), (525, 609),
-        (522, 614), (517, 619), (510, 623), (503, 627), (495, 629),
-        (487, 631), (478, 632), (470, 631), (461, 629), (453, 627),
-        (446, 623), (440, 619), (435, 614), (431, 609), (429, 603),
-        (428, 597), (436, 595), (426, 571), (426, 545), (431, 519),
-        (431, 493), (432, 467), (432, 441), (430, 415), (429, 389),
-        (432, 363), (434, 337), (434, 311), (434, 285), (434, 259),
-        (436, 233), (430, 207), (435, 175),
+        (240, 95), (235, 120), (230, 160), (226, 200), (224, 240),
+        (222, 280), (220, 320), (219, 360), (218, 400), (218, 440),
+        (218, 480), (218, 520), (218, 560), (210, 590), (190, 610),
+        (160, 618), (130, 618), (100, 610), (75, 590), (65, 560),
+        (63, 520), (62, 480), (61, 440), (60, 400), (59, 360),
+        (58, 320), (56, 280), (54, 240), (51, 200), (48, 160),
+        (45, 120), (40, 95)
     ],
-    # Path 5 — Mold 2 Entry/Exit / Cleanout stub (hosts station 34): short direct
-    # bypass alongside Path 4's junction span.
-    5: [(518, 175), (476, 172), (435, 175)],
+    # Path 5 - tiny connector at top left (left spur to main rail)
+    5: [(40, 95), (36, 70)]
 }
-
-
 def _cumulative_lengths(pts: list[tuple[float, float]]) -> list[float]:
     s = [0.0]
     for a, b in zip(pts, pts[1:]):
