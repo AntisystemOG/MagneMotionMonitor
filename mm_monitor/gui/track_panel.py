@@ -71,6 +71,24 @@ _PATH_COLORS = {
 # positions (see STATION_LOCATIONS) are visibly labeled, not just dots.
 _KEY_STATIONS = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 26, 29, 30, 33, 34}
 
+# Per-station label placement preference when the photo view is crowded.
+# Each entry is (dx_hint, dy_hint) in pixels relative to the station dot:
+#  - vertical band:  above/below works best on straight vertical spurs.
+#  - horizontal band: left/right works best on straight rails.
+# Absent stations fall back to the default below-anchor placement.
+_LABEL_PREFS: dict[int, tuple[float, float]] = {
+    12: (0, -18),   # Mold 2 Cooling — above on left vertical spur
+    13: (0, 16),    # Pre-Load Roller — below, left top rail
+    14: (0, -18),   # Load Roller — above top rail
+    16: (50, -8),   # Load Pin — right, top rail
+    18: (0, -18),   # Insp Pin 1 — above top rail
+    26: (0, 16),    # Roller Test 6 — below top rail
+    29: (40, -8),   # Offload — right, upper right curve
+    30: (50, 8),    # Mold Direction Check — right, upper right curve
+    33: (-55, -8),  # HOME / Cold Start — left, left spur
+    34: (0, -18),   # Cleanout — above left spur
+}
+
 
 class _Cart:
     __slots__ = ("id", "path", "pos", "vel", "dest", "alarm", "held")
@@ -446,6 +464,7 @@ class TrackCanvas(QWidget):
 
         # ── stations (dots only — labels placed later) ───────────────────────
         station_anchors: list[tuple[QPointF, str]] = []   # (screen_pt, label_text)
+        station_id_by_anchor: dict[tuple[float, float], int] = {}
         for sid, (pth, loc, name) in STATION_LOCATIONS.items():
             pt = point_at(pth, loc)
             if pt is None:
@@ -453,11 +472,20 @@ class TrackCanvas(QWidget):
             sp = T(pt[0], pt[1])
             is_key = sid in _KEY_STATIONS
             p.setPen(Qt.NoPen)
-            p.setBrush(QBrush(QColor("#d4a017" if is_key else "#8899aa")))
-            r = 4 if is_key else 2.5
+            # Photo already has station names printed on the rail; drawing text
+            # on top duplicates them. In photo mode show only the dot, larger
+            # and brighter so it stands out against the printed labels.
+            if photo_mode:
+                p.setBrush(QBrush(QColor("#f1c40f" if is_key else "#8899aa")))
+                r = 5.5 if is_key else 3
+            else:
+                p.setBrush(QBrush(QColor("#d4a017" if is_key else "#8899aa")))
+                r = 4 if is_key else 2.5
             p.drawEllipse(sp, r, r)
-            if self._show_labels and is_key:
+            # Text labels are only needed in schematic mode (the photo labels itself).
+            if not photo_mode and self._show_labels and is_key:
                 station_anchors.append((sp, f"{sid} {name}"))
+                station_id_by_anchor[(sp.x(), sp.y())] = sid
 
         # ── carts (body only — labels placed later) ───────────────────────────
         _CART_R = 11
@@ -493,10 +521,12 @@ class TrackCanvas(QWidget):
                     f"{c.vel:.2f} m/s", "#1a5a99", False))
 
         # ── label placement pass (all labels, collision-aware) ────────────────
+        # In photo mode station text labels are intentionally suppressed, but
+        # cart labels (velocity, alarm, assumed) still need placement.
         all_labels: list[tuple[QPointF, str, str, bool]] = (
             [(a, t, "#333355", False) for a, t in station_anchors] + cart_labels
         )
-        self._draw_labels(p, all_labels, w, h)
+        self._draw_labels(p, all_labels, w, h, station_id_by_anchor)
 
         # ── legend (bottom) + count (bottom-right) ───────────────────────────
         # The color legend keys the schematic's colored path lines — meaningless
@@ -559,37 +589,63 @@ class TrackCanvas(QWidget):
 
     def _draw_labels(self, p: QPainter,
                      items: list[tuple[QPointF, str, str, bool]],
-                     w: int, h: int):
+                     w: int, h: int,
+                     anchor_station_ids: dict[tuple[float, float], int] | None = None):
         """Place all labels with collision avoidance.
         Each item: (anchor_pt, text, color, bold).
         anchor_pt is where the leader arrow points (station dot or cart bottom edge).
         When a label is displaced from its default position, a dotted leader line
-        and a small arrowhead dot are drawn back to the anchor."""
-        LW, LH, PAD = 110, 14, 4
+        and a small arrowhead dot are drawn back to the anchor.
+
+        anchor_station_ids maps an anchor point back to a STATION_LOCATIONS key
+        so the per-station preference in _LABEL_PREFS can be honored."""
+        LH, PAD, GAP = 14, 4, 3
+
+        def measure(text: str, bold: bool) -> float:
+            p.setFont(QFont("Segoe UI", 7, QFont.Bold if bold else QFont.Normal))
+            fm = p.fontMetrics()
+            return max(fm.horizontalAdvance(text) + 10, 44)
 
         placed: list[QRectF] = []
 
         for anchor, text, color, bold in items:
             ax, ay = anchor.x(), anchor.y()
-            hw = LW / 2
+            lw = measure(text, bold)
+            hw = lw / 2
 
-            # Candidate positions in priority order
-            candidates = [
-                QRectF(ax - hw,      ay + 4,       LW, LH),   # below (default)
-                QRectF(ax - hw,      ay - LH - 4,  LW, LH),   # above
-                QRectF(ax + 6,       ay - LH / 2,  LW, LH),   # right
-                QRectF(ax - LW - 6,  ay - LH / 2,  LW, LH),   # left
-                QRectF(ax - hw,      ay + 20,       LW, LH),   # further below
-                QRectF(ax - hw,      ay - LH - 20,  LW, LH),   # further above
-                QRectF(ax + 6,       ay + 4,        LW, LH),   # lower-right
-                QRectF(ax - LW - 6,  ay + 4,        LW, LH),   # lower-left
-                QRectF(ax + 6,       ay - LH - 4,   LW, LH),   # upper-right
-                QRectF(ax - LW - 6,  ay - LH - 4,   LW, LH),   # upper-left
-            ]
+            sid = (anchor_station_ids.get((ax, ay)) if anchor_station_ids
+                   else None)
+            pref = _LABEL_PREFS.get(sid) if sid else None
+
+            if pref:
+                dx, dy = pref
+                # Anchor the preferred rectangle so the label sits dx/dy away.
+                pref_rect = QRectF(ax + dx - hw, ay + dy - LH / 2, lw, LH)
+                candidates = [
+                    pref_rect,
+                    QRectF(ax - hw, ay + 4, lw, LH),             # below
+                    QRectF(ax - hw, ay - LH - 4, lw, LH),      # above
+                    QRectF(ax + 6, ay - LH / 2, lw, LH),         # right
+                    QRectF(ax - lw - 6, ay - LH / 2, lw, LH),   # left
+                    QRectF(ax - hw, ay + 20, lw, LH),            # further below
+                    QRectF(ax - hw, ay - LH - 20, lw, LH),       # further above
+                ]
+            else:
+                candidates = [
+                    QRectF(ax - hw, ay + 4, lw, LH),             # below (default)
+                    QRectF(ax - hw, ay - LH - 4, lw, LH),        # above
+                    QRectF(ax + 6, ay - LH / 2, lw, LH),         # right
+                    QRectF(ax - lw - 6, ay - LH / 2, lw, LH),   # left
+                    QRectF(ax - hw, ay + 20, lw, LH),            # further below
+                    QRectF(ax - hw, ay - LH - 20, lw, LH),       # further above
+                    QRectF(ax + 6, ay + 4, lw, LH),              # lower-right
+                    QRectF(ax - lw - 6, ay + 4, lw, LH),         # lower-left
+                    QRectF(ax + 6, ay - LH - 4, lw, LH),         # upper-right
+                    QRectF(ax - lw - 6, ay - LH - 4, lw, LH),    # upper-left
+                ]
 
             chosen = None
             for rect in candidates:
-                # Discard rects that go off-canvas
                 if rect.left() < 2 or rect.right() > w - 2:
                     continue
                 if rect.top() < 2 or rect.bottom() > h - 24:   # leave room for legend
@@ -610,13 +666,11 @@ class TrackCanvas(QWidget):
 
             if displaced:
                 lc = chosen.center()
-                # Dotted leader line from label center to anchor
                 pen = QPen(QColor("#9999bb"), 1, Qt.DotLine)
                 pen.setDashPattern([2, 3])
                 p.setPen(pen)
                 p.setBrush(Qt.NoBrush)
                 p.drawLine(lc, anchor)
-                # Small filled dot at the anchor (arrowhead substitute)
                 p.setPen(Qt.NoPen)
                 p.setBrush(QBrush(QColor("#9999bb")))
                 p.drawEllipse(anchor, 3, 3)
