@@ -149,7 +149,9 @@ def _place_labels(draw: ImageDraw.ImageDraw, w: int, h: int,
             draw.text((cx, cy + 2), text, fill=(51, 51, 85))
 
 
-def render_frame(recording: Recording, idx: int, out_path: Path, draw_stations: bool = True):
+def render_frame(recording: Recording, idx: int, out_path: Path,
+                 draw_stations: bool = True,
+                 draw_station_labels: bool = True):
     photo_path = ROOT / "mm_monitor" / "data" / "track_photo.png"
     img = Image.open(photo_path).convert("RGBA")
     draw = ImageDraw.Draw(img)
@@ -174,12 +176,13 @@ def render_frame(recording: Recording, idx: int, out_path: Path, draw_stations: 
                 continue
             is_key = sid in _KEY_STATIONS
             x, y = pt
-            # The photo already prints station names on the rails, so we only
-            # draw bright dots to mark the calibrated station positions; adding
-            # text labels would duplicate the printed labels.
+            # The photo already prints station names on the rails. New behavior
+            # draws only dots; old behavior also overlaid text labels.
             r = 5.5 if is_key else 3
             draw.ellipse([x - r, y - r, x + r, y + r],
                          fill=(241, 196, 15) if is_key else (136, 153, 170))
+            if is_key and draw_station_labels:
+                station_anchors.append(((x, y), f"{sid} {name}", sid))
 
     snap = recording.snapshot(idx)
     raw_carts = _snap_carts(snap)
@@ -189,8 +192,6 @@ def render_frame(recording: Recording, idx: int, out_path: Path, draw_stations: 
         if xy is None:
             continue
         _draw_cart(draw, xy, c.id, font=label_font)
-        # Cart velocity labels are useful live, but in a static calibration
-        # render they add clutter on top of the already-labeled photo.
 
     w, h = img.size
     _place_labels(draw, w, h, station_anchors, label_font)
@@ -210,8 +211,8 @@ def main() -> int:
                         help="Output directory for rendered frames")
     parser.add_argument("--frames", type=int, nargs="+", default=None,
                         help="Specific frame indices to render (default: 0, mid, last)")
-    parser.add_argument("--gif", action="store_true", help="Also render a GIF of every Nth frame")
-    parser.add_argument("--gif-step", type=int, default=5, help="Frame step for GIF")
+    parser.add_argument("--draw-station-labels", action="store_true",
+                        help="Simulate old behavior: draw on-canvas station text labels (creates duplicates)")
     args = parser.parse_args()
 
     rec = Recording.load(args.recording)
@@ -221,19 +222,8 @@ def main() -> int:
     indices = args.frames or [0, len(rec) // 4, len(rec) // 2, 3 * len(rec) // 4, len(rec) - 1]
     for idx in indices:
         out = out_dir / f"frame_{idx:04d}.png"
-        render_frame(rec, idx, out)
+        render_frame(rec, idx, out, draw_station_labels=args.draw_station_labels)
         print(out)
-
-    if args.gif:
-        frames = []
-        for idx in range(0, len(rec), args.gif_step):
-            out = out_dir / f"gif_tmp_{idx:04d}.png"
-            render_frame(rec, idx, out)
-            frames.append(Image.open(out))
-        gif_path = out_dir / "playback.gif"
-        frames[0].save(gif_path, save_all=True, append_images=frames[1:],
-                       duration=50, loop=0)
-        print(gif_path)
 
     return 0
 
