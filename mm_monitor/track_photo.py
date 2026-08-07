@@ -45,18 +45,14 @@ PHOTO_SIZE = (1584, 672)
 # along this pixel polyline — so absolute pixel spacing doesn't need to exactly
 # match real-world scale, only the relative shape/order needs to be right.
 PATH_WAYPOINTS_PX: dict[int, list[tuple[float, float]]] = {
-    # Path 6 — Process / top main rail: rendered onto the new clean track photo.
-    # The top rail is the long horizontal silver beam. Waypoints run from the
-    # left junction (near the purple Mold-2 spur / green return), around the
-    # rounded left cap, across the straight top section, around the rounded
-    # right cap, and down to the right junction (blue Mold-1 spur).
-    # Calibrated from render feedback: straight section centerline ~Y=164.
+    # Path 6 — Process / top main rail: calibrated onto the new clean rendered
+    # track photo. Waypoints follow the silver top rail centerline where pallets
+    # actually ride, traced from the user's marked photo.
     6: [
-        (330, 284), (300, 264), (250, 244), (200, 224), (150, 204),
-        (100, 184), (70, 174), (80, 164), (120, 162), (200, 161),
-        (350, 161), (500, 161), (650, 161), (800, 161), (950, 161),
-        (1100, 161), (1250, 161), (1380, 162), (1460, 174), (1510, 194),
-        (1530, 219), (1500, 244), (1450, 264),
+        (40, 150), (80, 155), (160, 158), (300, 162), (420, 166),
+        (550, 172), (675, 178), (800, 185), (925, 191), (1050, 198),
+        (1175, 206), (1300, 215), (1410, 228), (1520, 245), (1560, 255),
+        (1580, 245), (1570, 230),
     ],
     # Path 1 — Mold 1 Entry/Exit (tiny, no stations): closes the gap between
     # Path 6's end and the right spur junction.
