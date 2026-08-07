@@ -11,3 +11,5 @@ build/
 FTAManagerData.xml
 *_test.png
 crash_logs/
+
+nul
