@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MagneMotion Track — Overview</title>
+<style>
+body { font-family: Segoe UI, Arial, sans-serif; background: #f0f4ff; margin: 0; padding: 20px; }
+h1 { color: #333355; }
+.container { max-width: 1700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ccc; }
+table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background: #5b6b8c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MagneMotion Track — Operator Overview</h1>
+<p>This is the labeled track reference built in the Track Alignment program. It shows the
+3-D track photo with station labels and the calibrated PLC path colors.</p>
+
+<p><img src="../Track Alignment program/waypoints_preview.png" alt="Labeled track overview"></p>
+
+<h2>Path / Color Reference</h2>
+<table>
+<tr><th>Path</th><th>Name</th><th>Color</th><th>Key stations / role</th></tr>
+<tr><td>1</td><td>Mold 1 Entry/Exit</td><td>Cyan</td><td>Right-side vertical connector</td></tr>
+<tr><td>2</td><td>Mold 1</td><td>Blue</td><td>Right U-spur: Preload/Load/Cooling stations</td></tr>
+<tr><td>3</td><td>Cleanout / Lower rail</td><td>Green</td><td>Lower return rail: HOME / Cold Start, Cleanout junction</td></tr>
+<tr><td>4</td><td>Mold 2</td><td>Purple</td><td>Left U-spur: Mold 2 Preload/Load/Cooling stations</td></tr>
+<tr><td>5</td><td>Mold 2 Entry/Exit</td><td>Magenta/Pink</td><td>Left-side connector (Cleanout area)</td></tr>
+<tr><td>6</td><td>Process</td><td>Yellow/Gold</td><td>Top main rail: Load Roller, Inspection, Roller Test, Offload</td></tr>
+</table>
+
+<h2>Direction of travel</h2>
+<p>Pallets travel clockwise around the loop: top rail (6) left-to-right, right connector
+(1) downward, lower rail (3) right-to-left, left connector (5) upward. Mold spurs (2 and
+4) branch off the right and left connectors respectively.</p>
+
+<h2>Tools</h2>
+<ul>
+<li><a href="legend.html">Path Legend</a> — browser-friendly color key.</li>
+<li>Track Alignment program (main.py) — edit waypoints, add/delete points, zoom/pan.</li>
+</ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MagneMotion Track Overview</title>
+<style>
+body { font-family: Segoe UI, Arial, sans-serif; background: #f0f4ff; margin: 0; padding: 20px; }
+h1 { color: #333355; }
+.container { max-width: 1700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+img { max-width: 100%; border: 1px solid #ccc; }
+table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background: #5b6b8c; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MagneMotion Track Overview — 2-D Master Geometry</h1>
+<p>This overview uses the exact 2-D Magnemotion master geometry as the track reference.</p>
+<p><img src="../mm_monitor/data/track_photo.png" alt="Track geometry"></p>
+
+<h2>Path Reference</h2>
+<table>
+<tr><th>Path</th><th>Name</th><th>Color</th><th>Description</th></tr>
+<tr><td>1</td><td>Mold 1 Entry/Exit</td><td>Cyan</td><td>Right vertical connector between top and bottom rails</td></tr>
+<tr><td>2</td><td>Mold 1</td><td>Red</td><td>Right U-shaped mold spur</td></tr>
+<tr><td>3</td><td>Cleanout</td><td>White/Gray</td><td>Bottom return rail</td></tr>
+<tr><td>4</td><td>Mold 2</td><td>Orange</td><td>Left U-shaped mold spur</td></tr>
+<tr><td>5</td><td>Mold 2 Entry/Exit</td><td>Magenta</td><td>Left vertical connector between top and bottom rails</td></tr>
+<tr><td>6</td><td>Process</td><td>Yellow/Green</td><td>Top main rail</td></tr>
+</table>
+
+<h2>Notes</h2>
+<ul>
+<li>All pallets travel clockwise: top rail (6) left-to-right, right connector (1) down,
+bottom rail (3) right-to-left, left connector (5) up.</li>
+<li>Path 2 and Path 4 are mold spurs that branch off the right and left connectors.</li>
+<li>Cleanout is at the left junction (Path 5 start); HOME / Cold Start is on the bottom rail.</li>
+</ul>
+</div>
+</body>
+</html>

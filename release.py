@@ -64,6 +64,17 @@ def build_exe():
     print("Built dist/MagneMotionMonitor.exe")
 
 
+def build_exe_fast():
+    """Incremental build: reuse PyInstaller cache. Much faster than --clean."""
+    print("Building EXE (fast/incremental) …")
+    subprocess.run(
+        [sys.executable, "-m", "PyInstaller", "--noconfirm",
+         "MagneMotionMonitor.spec"],
+        cwd=ROOT, check=True,
+    )
+    print("Built dist/MagneMotionMonitor.exe")
+
+
 def _git(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
 
@@ -114,6 +125,9 @@ def git_publish(version: str):
 if __name__ == "__main__":
     version = bump()
     if "--no-build" not in sys.argv:
-        build_exe()
+        if "--fast" in sys.argv:
+            build_exe_fast()
+        else:
+            build_exe()
     if "--no-push" not in sys.argv and "--no-git" not in sys.argv:
         git_publish(version)

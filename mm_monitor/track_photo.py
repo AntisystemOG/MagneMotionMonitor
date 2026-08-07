@@ -53,84 +53,100 @@ PHOTO_SIZE = (1584, 672)
 # along this pixel polyline — so absolute pixel spacing doesn't need to exactly
 # match real-world scale, only the relative shape/order needs to be right.
 PATH_WAYPOINTS_PX: dict[int, list[tuple[float, float]]] = {
-    1: [
-        (1485.8776532269771, 126.2102010258049), (1487.8362804530773, 134.32745547800442), (1487.263089879491, 150.1161241071498), (1481.0611199373366, 164.06036385811043),
-        (1461.880854275564, 178.29165404075468),
-    ],
-    2: [
-        (1455.0478144751912, 206.60857669187482), (1467.8546461468452, 274.4842811719243), (1485.8402891738804, 388.76614624925884), (1496.5367622703557, 455.10185993322483),
-        (1494.2496079356831, 459.2896823279316), (1510.6929808856082, 480.1669077054223), (1521.9, 503.6), (1521.2, 520.7),
-        (1520.5, 537.8), (1520.3, 541.6), (1519.9, 551.1), (1518.2, 564.2),
-        (1516.1, 581.2), (1514.6, 590.4), (1505.2, 599.8), (1497.1, 607.9),
-        (1484.9, 612.3), (1481.2, 613.1), (1473.8, 614.8), (1457.2, 617.4),
-        (1449.8, 615.7), (1438.7, 613.1), (1431.2, 611.4), (1420.9, 607.2),
-        (1414.5, 603.0), (1408.2, 598.8), (1400.3, 593.5), (1395.6, 590.4),
-        (1392.9, 581.5), (1390.6, 572.2), (1384.9, 548.2), (1384.7, 542.6),
-        (1384.2, 531.2), (1383.5, 512.2), (1383.0, 500.8), (1382.1, 478.0),
-        (1381.6, 464.8), (1379.8, 419.2), (1379.4, 409.7), (1378.8, 394.5),
-        (1378.0, 375.6), (1377.4, 360.4), (1376.7, 341.4), (1375.7, 316.7),
-        (1375.1, 303.5), (1372.5, 275.1), (1371.4, 263.8), (1370.2, 252.4),
-        (1366.0, 233.9), (1363.2, 222.9), (1360.0, 210.0),
-    ],
-    3: [
-        (1360.0, 210.0), (1342.7, 210.0), (1321.2, 210.0), (1299.6, 210.0),
-        (1269.4, 210.0), (1249.9, 210.0), (1232.7, 210.0), (1211.1, 210.0),
-        (1187.4, 210.0), (1155.0, 210.0), (1129.1, 210.0), (1111.8, 210.0),
-        (1092.4, 210.0), (1077.3, 210.0), (1062.2, 210.0), (1049.2, 210.0),
-        (1027.7, 210.0), (1001.8, 210.0), (988.8, 210.0), (967.2, 210.0),
-        (945.7, 210.0), (928.4, 210.0), (904.7, 210.0), (887.4, 210.0),
-        (872.3, 210.0), (855.0, 210.0), (837.8, 210.0), (820.5, 210.0),
-        (803.2, 210.0), (788.1, 210.0), (773.0, 210.0), (757.9, 210.0),
-        (740.7, 210.0), (721.2, 210.0), (701.8, 210.0), (686.7, 210.0),
-        (671.6, 210.0), (658.7, 210.0), (643.5, 210.0), (624.1, 210.0),
-        (602.5, 210.0), (589.6, 210.0), (576.6, 210.0), (563.7, 210.0),
-        (548.6, 210.0), (533.5, 210.0), (518.4, 210.0), (496.8, 210.0),
-        (486.0, 210.0), (473.1, 210.0), (449.3, 210.0), (436.4, 210.0),
-        (408.3, 210.0), (393.2, 210.0), (378.1, 210.0), (347.9, 210.0),
-        (319.8, 210.0), (300.4, 210.0), (270.2, 210.0), (252.9, 210.0),
-        (240.0, 210.0),
-    ],
-    4: [
-        (240.0, 210.0), (229.5, 254.7), (228.9, 260.7), (225.8, 292.5),
-        (224.3, 318.4), (223.5, 338.4), (223.1, 346.3), (222.9, 352.3),
-        (221.7, 382.3), (221.0, 400.2), (220.8, 406.2), (220.6, 410.2),
-        (219.1, 448.1), (218.5, 462.1), (218.4, 466.1), (218.0, 476.1),
-        (217.8, 480.1), (216.8, 506.0), (216.3, 518.0), (215.9, 528.0),
-        (215.2, 546.0), (214.8, 551.9), (212.0, 573.7), (211.5, 577.7),
-        (210.3, 587.6), (204.6, 595.4), (203.2, 596.8), (194.7, 605.3),
-        (181.0, 612.1), (163.4, 616.1), (161.5, 616.5), (151.7, 617.3),
-        (122.5, 610.6), (115.5, 607.0), (103.9, 599.2), (100.5, 597.0),
-        (87.3, 579.0), (85.8, 573.2), (84.4, 567.4), (82.9, 561.6),
-        (79.8, 546.0), (78.9, 522.0), (78.8, 520.0), (78.5, 512.0),
-        (77.6, 490.1), (76.4, 460.1), (76.1, 452.1), (75.8, 446.2),
-        (75.1, 428.2), (74.2, 404.2), (73.6, 390.3), (72.7, 368.3),
-        (71.1, 326.4), (70.8, 320.4), (70.6, 314.4), (70.5, 312.4),
-        (67.1, 270.6), (58.4, 223.6), (56.0, 213.9), (55.5, 211.9),
-        (55.0, 210.0),
-    ],
-    5: [
-        (55.0, 210.0), (52.1, 208.1), (47.8, 205.2), (45.7, 203.8),
-        (44.9, 203.3), (43.5, 202.3), (40.0, 199.9), (40.0, 196.4),
-        (40.0, 193.0), (40.0, 191.2), (40.0, 186.0), (40.0, 185.2),
-        (40.0, 184.3), (40.0, 183.5), (40.0, 182.6), (40.0, 181.7),
-        (40.0, 180.0),
-    ],
+    # Path 6 — Process: left junction -> approach leg -> left cap -> top straight
+    # -> right end (hands off to Path 1). Order matches the real travel direction.
     6: [
-        (40.0, 180.0), (53.5, 152.9), (68.3, 134.8), (92.7, 119.5),
-        (135.2, 111.5), (175.9, 107.4), (212.1, 104.4), (249.9, 102.5),
-        (277.2, 101.1), (318.0, 99.6), (354.4, 98.9), (381.6, 98.4),
-        (402.8, 98.0), (433.1, 97.7), (468.0, 97.3), (498.3, 97.0),
-        (543.7, 96.6), (574.0, 96.3), (613.4, 95.9), (658.8, 95.4),
-        (686.1, 95.1), (734.6, 95.0), (758.8, 95.0), (790.6, 95.0),
-        (827.0, 95.0), (846.7, 95.0), (890.6, 95.0), (910.3, 95.0),
-        (942.1, 95.0), (973.9, 95.0), (992.1, 95.0), (1020.9, 95.0),
-        (1051.2, 95.0), (1083.0, 95.0), (1107.2, 95.0), (1130.0, 95.0),
-        (1142.1, 95.0), (1157.2, 95.0), (1181.5, 95.0), (1197.7201961105573, 96.13941166832849),
-        (1210.9827455478005, 89.30294165835762), (1233.0, 95.0), (1252.6231377689144, 81.7068638695011), (1269.2580421712605, 80.56745220117264),
-        (1293.0052982618756, 82.8462755378296), (1314.9535349052774, 83.22607942727242), (1346.7880438096765, 84.08568720615804), (1369.1274554780048, 82.80686386950109),
-        (1391.7776532269772, 82.24823664340131), (1413.0288315287364, 82.15117830175897), (1441.6894198604082, 84.13784606070291), (1459.0096159709656, 92.56784769911883),
-        (1476.4431443225785, 106.79000491524772),
+        (478, 175), (350, 175), (200, 165), (90, 130), (40, 90), (34, 65),
+        (90, 60), (200, 63), (400, 64), (600, 65), (800, 65), (1000, 66),
+        (1200, 67), (1350, 70), (1420, 85), (1460, 115), (1483, 150),
     ],
+    # Path 1 — Mold 1 Entry/Exit (tiny, no stations): closes the gap between
+    # Path 6's end and the right spur junction.
+    1: [(1483, 150), (1484, 172)],
+    # Path 2 — Mold 1 (RIGHT spur): down one leg, around the bottom, up the
+    # other. Straight legs are densely measured (numpy column-trace); the U-turn
+    # BOTTOM is a semi-ellipse arc through the two measured leg centerlines and
+    # the true rail-bottom centerline (measured by a vertical scan at the U's
+    # center x). An earlier horizontal-scan trace swung the bottom waypoints
+    # wide/low OUTSIDE the rail (a horizontal scan can't follow a tube that runs
+    # horizontally at the U bottom), so carts "left the track" at the turn.
+    # See scratchpad build_uturn.py / rebuild_spurs.py for the arc method.
+    2: [
+        (1449, 175), (1431, 207), (1433, 233), (1434, 259), (1436, 285),
+        (1438, 311), (1440, 337), (1442, 363), (1450, 389), (1447, 415),
+        (1448, 441), (1450, 467), (1452, 493), (1454, 519), (1461, 545),
+        (1461, 571), (1456, 593), (1451, 596), (1450, 601), (1448, 606),
+        (1444, 611), (1439, 616), (1433, 619), (1426, 622), (1418, 625),
+        (1410, 626), (1401, 626), (1393, 626), (1384, 625), (1376, 622),
+        (1369, 619), (1363, 616), (1358, 611), (1354, 606), (1352, 601),
+        (1352, 596), (1372, 593), (1362, 571), (1360, 545), (1362, 519),
+        (1360, 493), (1359, 467), (1358, 441), (1354, 415), (1352, 389),
+        (1353, 363), (1352, 337), (1350, 311), (1348, 285), (1346, 259),
+        (1344, 233), (1340, 207), (1358, 175),
+    ],
+    # Path 3 — long straight connector (hosts station 33, HOME/Cold Start, near
+    # its far end): right junction (Path 1's end) across to the left junction.
+    3: [(1483, 175), (1200, 175), (900, 176), (600, 177), (518, 175)],
+    # Path 4 — Mold 2 (LEFT spur): mirrors Path 2, same measured legs + semi-
+    # ellipse U-turn arc.
+    4: [
+        (518, 175), (527, 207), (524, 233), (524, 259), (523, 285),
+        (523, 311), (524, 337), (524, 363), (528, 389), (525, 415),
+        (523, 441), (522, 467), (523, 493), (522, 519), (528, 545),
+        (527, 571), (517, 595), (528, 597), (528, 603), (525, 609),
+        (522, 614), (517, 619), (510, 623), (503, 627), (495, 629),
+        (487, 631), (478, 632), (470, 631), (461, 629), (453, 627),
+        (446, 623), (440, 619), (435, 614), (431, 609), (429, 603),
+        (428, 597), (436, 595), (426, 571), (426, 545), (431, 519),
+        (431, 493), (432, 467), (432, 441), (430, 415), (429, 389),
+        (432, 363), (434, 337), (434, 311), (434, 285), (434, 259),
+        (436, 233), (430, 207), (435, 175),
+    ],
+    # Path 5 — Mold 2 Entry/Exit / Cleanout stub (hosts station 34): short direct
+    # bypass alongside Path 4's junction span.
+    5: [(518, 175), (476, 172), (435, 175)],
+}
+
+
+def _cumulative_lengths(pts: list[tuple[float, float]]) -> list[float]:
+    s = [0.0]
+    for a, b in zip(pts, pts[1:]):
+        s.append(s[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    return s
+
+
+# Mold spurs (paths 2 & 4): the real path is leg → U-turn → leg, and the
+# U-turn is a genuinely SHORT slice of the real length (the two 90° curves
+# that make up the 180° turn are only ~8% of the path — see
+# track_geometry.build_track()'s segment lengths). But the PHOTOGRAPHED curve's
+# pixel-arc-length share is much larger (measured ~19-21%), because the real
+# curve is a tight radius while the physical rail's visible turn spans a much
+# wider arc in the photo. Mapping "real fraction" straight onto "pixel
+# fraction" 1:1 therefore put anything past the turn (e.g. a mold's Load 2
+# station, or a cart mid-transit) noticeably further along the pixel path than
+# it should be — reported as "the label should be higher up" and "carts take
+# a weird route around the bend".
+#
+# Fix: a piecewise-linear correction, anchored at the two leg/curve transition
+# points on both sides — (real_fraction, pixel_fraction) pairs measured directly
+# from these paths' own waypoint lists and track_geometry's real segment
+# lengths. Between anchors, a real fraction is linearly remapped to the pixel
+# fraction it should ACTUALLY correspond to, before the normal arc-length
+# lookup runs. Paths without an entry here (1, 3, 5, 6) use real_frac ==
+# pixel_frac directly — their curves are a small enough share of the total
+# length that this mismatch isn't meaningfully visible.
+# Anchors: (0, 0) and the two leg/curve transitions come from track_geometry's
+# real segment lengths + the measured pixel arc-length of those transitions in
+# the waypoints above. The EXTRA middle anchor (~0.71 real) is a "Load lift":
+# the HMI Load 2 meter (3.405 m) maps mathematically to only ~37% up the return
+# leg, but on the real machine the load station sits ~2/3 up the leg (field-
+# confirmed by the operator with a pointer). Rather than distrust the HMI meter
+# everywhere, this single anchor pulls the Load region up to match reality; the
+# leg/curve anchors keep the U-turn correct and Cooling (top) unaffected. If the
+# operator flags a station as still off, nudge the matching anchor's pixel value.
+REAL_TO_PIXEL_BREAKPOINTS: dict[int, list[tuple[float, float]]] = {
+    2: [(0.0, 0.0), (0.465, 0.424), (0.546, 0.576), (0.704, 0.860), (1.0, 1.0)],
+    4: [(0.0, 0.0), (0.459, 0.424), (0.541, 0.577), (0.712, 0.860), (1.0, 1.0)],
 }
 
 

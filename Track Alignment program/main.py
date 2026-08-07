@@ -47,14 +47,15 @@ PATH_COLORS = {
     6: QColor(0, 200, 200),    # cyan
 }
 
-# Best-guess legend labels for each path ID.  User can correct these later.
+# Best-guess legend labels for each path ID. Updated to match the user's
+# final labeled track image (Load Roller, Mold Direction Check, etc.).
 PATH_LABELS: dict[int, str] = {
-    1: "Right Vertical Loop (Mold 1)",
-    2: "Right-to-Top connector",
-    3: "Top Main Rail (preload / inspect / test / offload)",
-    4: "Top-to-Left connector",
-    5: "Left Vertical Loop (Mold 2)",
-    6: "Bottom Return Rail (home / cleanout / return)",
+    1: "Right Spur Entry/Exit (Mold 1 side)",
+    2: "Mold 1 Spur (Unload / Mold Direction Check)",
+    3: "Top Main Rail (Load Roller / Inspection / Roller Test / Offload)",
+    4: "Mold 2 Spur (Pre-Load / Load / Cooling)",
+    5: "Left Spur Entry/Exit (Mold 2 side)",
+    6: "Bottom Return Rail (Home / Cleanout / Return to Load)",
 }
 
 
