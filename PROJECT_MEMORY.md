@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.3.12** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.12 + full-track layout image** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -241,6 +241,24 @@ down for the turn). Verified: Mold 2's Load 2 station moved ~44px further up the
 spur still shows no clustering, now correctly denser through the legs and sparser through the
 turn. Paths 1/3/5/6 have no entry in `REAL_TO_PIXEL_BREAKPOINTS` (real_frac == pixel_frac) — their
 curves are too small a share of total length for this to be visibly worth correcting.
+
+### Full track layout image (2026-08-07)
+Thad provided a freehand CAD-style full-loop layout with a grid overlay and the travel path
+marked in red, saved as `Pictures and graphics\full_track_grid.png` and noted in
+`track_layout_note.md`. It labels every station by its real machine name rather than just
+station number, which resolves ambiguity between similarly-named HMI points:
+
+- **Top straight (process line):** 13 Pre-Load Roller → 14 Load Roller → 16 Load Pin → 18 Insp Pin 1
+- **Top-right curve / spur:** 26 Roller Test 6 → 30 Mold Direction Check → 6 Mold 1 Cooling (blue U-turn)
+- **Left drop spur:** 12 Mold 2 Cooling (purple U-turn)
+- **Merge area:** 34 Cleanout → 33 HOME / Cold Start
+
+This image is the best current reference for the physical station order and approximate
+positions. The next step is to either (a) replace/augment `track_photo.png` with this cleaner
+schematic and re-align the cart overlay, or (b) use it to correct `PATH_WAYPOINTS_PX` and
+`STATION_LOCATIONS` in the code if the existing photo calibration drifts. Because it is freehand,
+use it for topology and naming first; verify exact meter positions against the live HMI position
+edit screen before changing distance-based code.
 
 **Station positions corrected from the real HMI** (`STATION_LOCATIONS` in `system_data.py`):
 the "Magnemotion Position Edits" screen (a live position-edit HMI on the actual machine) gives
