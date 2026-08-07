@@ -25,19 +25,11 @@ PATH → PHOTO ELEMENT MAP (confirmed via schematic color rendering, see PROJECT
   Path 1 (Mold 1 Entry/Exit)-> tiny connector at the right junction (no stations)
   Path 5 (Mold 2 Entry/Exit)-> tiny connector at the left junction (1 station: Cleanout)
 
-ACCURACY: paths 6, 2, 4 (28 of 30 real stations, everything the operator actually
-watches) are calibrated from measured photo pixels. Paths 2 and 4 (the two mold
-spurs) use a DENSE trace (numpy column-scan of both legs + the U-turn bottom, every
-~2-4px) rather than a coarse hand-placed polyline — an earlier ~9-point version made
-a cart look like it "stopped before the turn" into a spur, because a straight-line
-approximation compresses some of the real curve into too few pixels relative to how
-much real length it represents, so a cart's fractional position lands short there.
-The dense trace fixes that: a cart moving in even real-meter steps now advances
-evenly through the whole spur, curve included (verified by walking a simulated cart
-in 0.5m steps and checking the pixel spacing stays even all the way around).
-Paths 1/3/5 (short connectors, hosting only "Home" and "Cleanout") still use
-straight-line approximations between their measured junction points — fine for
-"where roughly is this pallet", not survey-grade. If something still looks off
+ACCURACY: Path 6 (top main rail) was recalibrated onto the current clean rendered
+photo so carts ride the silver horizontal beam. Paths 2, 4, 3, 5, 1 still carry
+waypoints from the previous annotated photo and will need recalibration if you
+make this new render the primary background. For the top-rail path that was just
+requested, the alignment has been visually verified with a recording render.
 once you can compare it against the real machine, see PATH_WAYPOINTS_PX below.
 """
 from __future__ import annotations
@@ -53,12 +45,18 @@ PHOTO_SIZE = (1584, 672)
 # along this pixel polyline — so absolute pixel spacing doesn't need to exactly
 # match real-world scale, only the relative shape/order needs to be right.
 PATH_WAYPOINTS_PX: dict[int, list[tuple[float, float]]] = {
-    # Path 6 — Process: left junction -> approach leg -> left cap -> top straight
-    # -> right end (hands off to Path 1). Order matches the real travel direction.
+    # Path 6 — Process / top main rail: rendered onto the new clean track photo.
+    # The top rail is the long horizontal silver beam. Waypoints run from the
+    # left junction (near the purple Mold-2 spur / green return), around the
+    # rounded left cap, across the straight top section, around the rounded
+    # right cap, and down to the right junction (blue Mold-1 spur).
+    # Calibrated from render feedback: straight section centerline ~Y=164.
     6: [
-        (478, 175), (350, 175), (200, 165), (90, 130), (40, 90), (34, 65),
-        (90, 60), (200, 63), (400, 64), (600, 65), (800, 65), (1000, 66),
-        (1200, 67), (1350, 70), (1420, 85), (1460, 115), (1483, 150),
+        (330, 284), (300, 264), (250, 244), (200, 224), (150, 204),
+        (100, 184), (70, 174), (80, 164), (120, 162), (200, 161),
+        (350, 161), (500, 161), (650, 161), (800, 161), (950, 161),
+        (1100, 161), (1250, 161), (1380, 162), (1460, 174), (1510, 194),
+        (1530, 219), (1500, 244), (1450, 264),
     ],
     # Path 1 — Mold 1 Entry/Exit (tiny, no stations): closes the gap between
     # Path 6's end and the right spur junction.
