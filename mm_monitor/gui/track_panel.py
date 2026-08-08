@@ -31,7 +31,7 @@ from ..system_data import (
     vehicle_alarm_kind, current_operation,
 )
 from ..track_geometry import build_track
-from ..track_photo import PHOTO_SIZE, build_photo_track_model
+from ..track_photo import PHOTO_SIZE, build_photo_track_model, get_adjusted_station_pixels
 
 # Real photo of the physical S7000 track. When present, this replaces the
 # auto-generated schematic as the Live Track background (see track_photo.py for
@@ -353,12 +353,14 @@ class TrackCanvas(QWidget):
         # missing or fails to decode; nothing else needs to change for that case.
         self._photo_pixmap: QPixmap | None = None
         self._photo_model = None
+        self._adjusted_station_pixels: dict[str, tuple[float, float]] = {}
         try:
             if _PHOTO_PATH.exists():
                 pix = QPixmap(str(_PHOTO_PATH))
                 if not pix.isNull():
                     self._photo_pixmap = pix
                     self._photo_model = build_photo_track_model()
+                    self._adjusted_station_pixels = get_adjusted_station_pixels(_PHOTO_PATH)
         except Exception:
             self._photo_pixmap = None
             self._photo_model = None
@@ -466,7 +468,12 @@ class TrackCanvas(QWidget):
         station_anchors: list[tuple[QPointF, str]] = []   # (screen_pt, label_text)
         station_id_by_anchor: dict[tuple[float, float], int] = {}
         for sid, (pth, loc, name) in STATION_LOCATIONS.items():
-            pt = point_at(pth, loc)
+            # Photo mode: prefer hand-adjusted pixel position from alignment tool CSV.
+            adjusted = self._adjusted_station_pixels.get(name) if photo_mode else None
+            if adjusted is not None:
+                pt = adjusted
+            else:
+                pt = point_at(pth, loc)
             if pt is None:
                 continue
             sp = T(pt[0], pt[1])

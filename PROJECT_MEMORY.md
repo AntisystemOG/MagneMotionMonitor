@@ -2,7 +2,7 @@
 
 > Living document to bring people and LLMs up to speed on what this app is, how it
 > works, the real-system facts it depends on, and the non-obvious fixes made.
-> Last updated for **v27.3.12 + full-track layout image** (WEEK.DAY.BUILD — see Build section).
+> Last updated for **v27.3.12 + full-track layout image + interactive alignment-tool path edit** (WEEK.DAY.BUILD — see Build section).
 
 ## What it is
 A standalone Windows desktop app (Python + PySide6) that monitors a **Rockwell/MagneMotion
@@ -254,11 +254,31 @@ station number, which resolves ambiguity between similarly-named HMI points:
 - **Merge area:** 34 Cleanout → 33 HOME / Cold Start
 
 This image is the best current reference for the physical station order and approximate
-positions. The next step is to either (a) replace/augment `track_photo.png` with this cleaner
-schematic and re-align the cart overlay, or (b) use it to correct `PATH_WAYPOINTS_PX` and
-`STATION_LOCATIONS` in the code if the existing photo calibration drifts. Because it is freehand,
-use it for topology and naming first; verify exact meter positions against the live HMI position
-edit screen before changing distance-based code.
+positions.
+
+### Updated track photo and waypoints (2026-08-08)
+`mm_monitor/data/track_photo.png` is the cleaned full-loop layout (red grid overlay removed,
+background neutralised). `mm_monitor/track_photo.py` now contains the 2026-08-08 hand-aligned
+waypoints produced with the Track Alignment tool (`Track Alignment program/main.py`). Thad
+dragged the single master loop's anchors until the interpolated PLC paths sat on the rails of
+the new photo, then saved directly back to `mm_monitor/track_photo.py`. The six PLC paths are
+split at the real rail junctions in travel order: Path 6 (top main rail) → Path 1 (right
+junction stub) → Path 2 (right/Mold 1 spur) → Path 3 (lower connector) → Path 4 (left/Mold 2
+spur) → Path 5 (left junction/Cleanout stub) → back to Path 6.
+
+Key fixes in this alignment:
+- **Path 5 (orange)** is now correctly a short 0.5 m connector between Path 4 and Path 6 at the
+top-left junction; it no longer carries the big loop that belongs to Path 6.
+- **Path 6 (cyan)** is the full top main rail from the top-left junction to the top-right
+junction, with both end curves included.
+- **Paths 2 and 4** follow the right and left U-shaped mold spurs with dense waypoints that
+encode the U-turn geometry directly.
+- `REAL_TO_PIXEL_BREAKPOINTS` for paths 2 and 4 were reset to identity for this photo because
+the dense waypoints already represent the visual curve; no artificial "Load lift" anchor is
+needed. Mold 1 Load 2 and Mold 2 Load 2 now render symmetrically on their respective return
+legs (~y=430).
+- The pytest suite (`tests/test_track_photo.py`) was updated to enforce the new Mold 2 Load 2
+position on the left return leg.
 
 **Station positions corrected from the real HMI** (`STATION_LOCATIONS` in `system_data.py`):
 the "Magnemotion Position Edits" screen (a live position-edit HMI on the actual machine) gives

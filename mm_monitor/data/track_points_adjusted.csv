@@ -1,0 +1,31 @@
+Station,Command,Actual,TrackLocation,PixelX,PixelY
+Preload Roller,5.5,5.5,Top Main Rail,572.79,86.91
+Preload Roller A,6.5,6.5,Top Main Rail,765.84,88.70
+Preload Pins,7.3164,7.3164,Top Main Rail,923.45,90.16
+Pre Insp Act.,7.813,7.813,Top Main Rail,1019.32,91.06
+Insp 1 Act.,7.479,7.479,Top Main Rail,954.84,90.40
+Insp 2 Act.,7.53,7.53,Top Main Rail,964.68,90.54
+Inspection 3,7.581,7.581,Top Main Rail,974.53,90.61
+Roller Test 1,7.813,7.813,Top Main Rail,1019.32,91.06
+Roller Test 2,8.054,8.054,Top Main Rail,1065.84,91.43
+Roller Test 3,8.293,8.293,Top Main Rail,1111.98,91.90
+Roller Test 4,8.631,8.631,Top Main Rail,1177.23,92.49
+Roller Test 5,8.872,8.872,Top Main Rail,1223.75,92.90
+Roller Test 6,9.112,9.112,Top Main Rail,1270.09,93.33
+Preload 1,9.4,9.4,Top Main Rail,1325.68,93.86
+Offload,9.9438,9.9438,Top Main Rail,1430.66,94.81
+Post Offload,9.65,9.65,Top Main Rail,1373.95,94.30
+Mold 1 Pre-Load 3,2.65,2.65,Right Vertical Loop,1433.60,548.07
+Mold 1 Pre-Load 2,2.75,2.75,Right Vertical Loop,1433.70,514.54
+Mold 1 Pre-Load 1,3.0,3.0,Right Vertical Loop,1437.37,439.76
+Mold 1 Load 1,3.012,3.012,Right Vertical Loop,1436.26,391.70
+Mold 1 Load 2,3.405,3.405,Right Vertical Loop,1434.40,349.13
+Mold 1 Cooling,4.5,4.5,Right Vertical Loop,1434.70,197.91
+Mold 2 Pre-Load 3,2.65,2.65,Left Vertical Loop,492.61,572.64
+Mold 2 Pre-Load 2,2.75,2.75,Left Vertical Loop,472.24,521.49
+Mold 2 Pre-Load 1,3.0,3.0,Left Vertical Loop,471.89,490.04
+Mold 2 Load 1,3.062,3.062,Left Vertical Loop,473.24,405.30
+Mold 2 Load 2,3.405,3.405,Left Vertical Loop,470.94,359.63
+Mold 2 Cooling,4.4,4.4,Left Vertical Loop,476.59,192.87
+HOME / Cold Start,4.5,4.5,Middle Connector,610.57,158.26
+Cleanout,0.15,0.15,Middle Connector,537.61,158.50

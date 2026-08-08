@@ -13,3 +13,12 @@ FTAManagerData.xml
 crash_logs/
 
 nul
+
+# Auto-traced rail outputs are experimental; keep only committed waypoints
+track_path_history/auto_traced_*
+
+# Alignment-tool temporary/adjusted CSVs are user-session artifacts
+track_path_history/waypoints_*.json
+Track Alignment program/track_points_adjusted.csv
+Track Alignment program/trace_rails.py
+

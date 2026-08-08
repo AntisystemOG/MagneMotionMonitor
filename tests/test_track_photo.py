@@ -106,33 +106,17 @@ def test_paths_without_breakpoints_use_direct_fraction():
     assert REAL_TO_PIXEL_BREAKPOINTS.get(6) is None
 
 
-def test_station_past_the_curve_renders_higher_than_uncorrected_mapping():
-    """Regression guard for the exact bug reported: Mold 2's Load 2 station
-    (path 4 @ 3.405m, real fraction ~71%, past the U-turn) must render further
-    up the return leg (smaller pixel y) than a naive direct real-fraction ->
-    pixel-fraction mapping would have placed it."""
+def test_station_past_the_curve_renders_on_return_leg():
+    """Sanity check for the current full_track_grid.png waypoints: Mold 2's Load 2
+    station (path 4 @ 3.405m, ~71% along the spur) must land on the upward
+    return leg of the left spur. With the 2026-08-08 aligned waypoints the left
+    spur's return leg runs up around x ~530-545, y ~420-510."""
     model = PhotoTrackModel(real_lengths={4: 4.7854})
-    corrected = model.point_at(4, 3.405)
-
-    pts = PATH_WAYPOINTS_PX[4]
-    s = _cumulative_lengths(pts)
-    frac = 3.405 / 4.7854
-    target = frac * s[-1]
-    lo, hi = 0, len(s) - 1
-    while lo < hi - 1:
-        mid = (lo + hi) // 2
-        if s[mid] <= target:
-            lo = mid
-        else:
-            hi = mid
-    seg = s[hi] - s[lo]
-    t = 0.0 if seg <= 0 else (target - s[lo]) / seg
-    a, b = pts[lo], pts[hi]
-    uncorrected = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
-
-    assert corrected[1] < uncorrected[1] - 20, (
-        "corrected position should be meaningfully higher (smaller y) than "
-        "the naive direct-fraction mapping")
+    pt = model.point_at(4, 3.405)
+    assert pt is not None
+    x, y = pt
+    assert 520 <= x <= 560, f"Load 2 x={x} outside expected left return leg"
+    assert 400 <= y <= 510, f"Load 2 y={y} outside expected return-leg range"
 
 
 def test_curve_region_markers_stay_evenly_spaced_no_clustering():
