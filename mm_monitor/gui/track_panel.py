@@ -441,8 +441,12 @@ class TrackCanvas(QWidget):
             p.drawPixmap(QRectF(offx, offy, pw * scale, ph * scale), self._photo_pixmap,
                         QRectF(0, 0, pw, ph))
             point_at = self._photo_model.point_at
-            # Spread same-path carts so they never overlap (beads on a string).
-            resolved_cart_xy = resolve_pallet_spacing(self._photo_model, self._carts)
+            # Photo mode shows the real track and printed station labels. Trust
+            # the PLC positions exactly — the spacing resolver's hard 26 px rule
+            # makes carts bunch/skip unnaturally near junctions and adjacent
+            # stations. Carts may overlap slightly when physically close, but
+            # motion stays smooth and physically faithful.
+            resolved_cart_xy = {}
         else:
             T, scale = self._make_transform(w, h)
             point_at = self._track.point_at
@@ -464,35 +468,23 @@ class TrackCanvas(QWidget):
                     e = pg.abs_pts[-1]
                     p.drawEllipse(T(e[0], e[1]), 5, 5)
 
-        # ── stations (dots only — labels placed later) ───────────────────────
+        # ── stations (dots only in schematic mode — the photo labels itself) ─
         station_anchors: list[tuple[QPointF, str]] = []   # (screen_pt, label_text)
         station_id_by_anchor: dict[tuple[float, float], int] = {}
-        for sid, (pth, loc, name) in STATION_LOCATIONS.items():
-            # Photo mode: prefer hand-adjusted pixel position from alignment tool CSV.
-            adjusted = self._adjusted_station_pixels.get(name) if photo_mode else None
-            if adjusted is not None:
-                pt = adjusted
-            else:
+        if not photo_mode:
+            for sid, (pth, loc, name) in STATION_LOCATIONS.items():
                 pt = point_at(pth, loc)
-            if pt is None:
-                continue
-            sp = T(pt[0], pt[1])
-            is_key = sid in _KEY_STATIONS
-            p.setPen(Qt.NoPen)
-            # Photo already has station names printed on the rail; drawing text
-            # on top duplicates them. In photo mode show only the dot, larger
-            # and brighter so it stands out against the printed labels.
-            if photo_mode:
-                p.setBrush(QBrush(QColor("#f1c40f" if is_key else "#8899aa")))
-                r = 5.5 if is_key else 3
-            else:
+                if pt is None:
+                    continue
+                sp = T(pt[0], pt[1])
+                is_key = sid in _KEY_STATIONS
+                p.setPen(Qt.NoPen)
                 p.setBrush(QBrush(QColor("#d4a017" if is_key else "#8899aa")))
                 r = 4 if is_key else 2.5
-            p.drawEllipse(sp, r, r)
-            # Text labels are only needed in schematic mode (the photo labels itself).
-            if not photo_mode and self._show_labels and is_key:
-                station_anchors.append((sp, f"{sid} {name}"))
-                station_id_by_anchor[(sp.x(), sp.y())] = sid
+                p.drawEllipse(sp, r, r)
+                if self._show_labels and is_key:
+                    station_anchors.append((sp, f"{sid} {name}"))
+                    station_id_by_anchor[(sp.x(), sp.y())] = sid
 
         # ── carts (body only — labels placed later) ───────────────────────────
         _CART_R = 11
